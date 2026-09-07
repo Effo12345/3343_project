@@ -1,4 +1,4 @@
-use crate::token::Token::{self, RCURL};
+use crate::token::Token;
 
 use std::fs::File;
 use std::io::{BufReader, Read, Bytes};
@@ -47,7 +47,7 @@ impl Scanner {
         let mut output_token = 
         match self.symbol_map.get(&c) {
             Some(token) => token.clone(),
-            None => Token::ERROR(String::from("Symbol not found"))
+            None => return Token::ERROR(String::from("Symbol not found"))
         };
 
         // consume the symbol
@@ -64,21 +64,22 @@ impl Scanner {
 
             if *self.symbol_map.get(&next_char).unwrap_or(&Token::EOS) == Token::ASSIGN {
                 output_token = Token::EQUAL;
+                self.reader.next(); // consume the second =
             }
         }
 
         return output_token;
     }
 
-    fn read_buf_until(&mut self, continue_read: impl Fn(char, &Scanner) -> ReadStatus, process_output: impl Fn(&str) -> Token, error_on_eos: bool) -> Token {
+    fn read_buf_until(&mut self, continue_read: impl Fn(char, &Scanner) -> ReadStatus, process_output: impl Fn(&str) -> Token, eos_on_eos: bool) -> Token {
         let mut string = String::with_capacity(Scanner::BUF_DEFAULT_LENGTH);
         let mut curr_status = ReadStatus::Continue;
 
         while curr_status == ReadStatus::Continue {
             // handle EOS based on caller settings
-            let Some(read_res) = self.reader.peek() else {
-                if error_on_eos {
-                    return Token::ERROR("Unexpected EOS".to_string());
+            let Some(peek_res) = self.reader.peek() else {
+                if eos_on_eos {
+                    return Token::EOS;
                 } else {
                     return process_output(&string);
                 }
@@ -86,10 +87,12 @@ impl Scanner {
 
             // handle read error
             let curr_char: char = 
-            match read_res {
+            match peek_res {
                 Ok(curr_u8) => *curr_u8 as char,
                 Err(error) => return Token::ERROR(error.to_string())
             };
+
+            println!("Reader peeked {curr_char}");
             
             // either continue reading and consume char, or error out
             curr_status = continue_read(curr_char, self);
@@ -109,8 +112,12 @@ impl Scanner {
     }
 
     pub fn next_token(&mut self) {
+        println!("Flushing separators");
         // flush separators and handle EOS case
-        if self.read_buf_until(self.separator_continue_read, self.noop_process_output, false) == Token::EOS {
+        let separator_token = self.read_buf_until(self.separator_continue_read, self.noop_process_output, true);
+        println!("Got separator token as {separator_token:?}");
+        if  separator_token == Token::EOS || matches!(separator_token, Token::ERROR { .. }) {
+            println!("Reached EOS on separator flush, returning that");
             self.curr_token = Token::EOS;
             return;
         }
@@ -129,16 +136,19 @@ impl Scanner {
         // match for special characters
         let symbol_token = self.match_symbols(curr_char);
         if !matches!(symbol_token, Token::ERROR { .. }) {
+            println!("{curr_char} matches {symbol_token:?}, returning that");
             self.curr_token = symbol_token;
             return;
         }
 
         // extract string
         if curr_char == Scanner::STRING_DELIMITER {
+            println!("Found ', extracting string");
+
             self.reader.next(); // consume starting '
             match self.read_buf_until(self.string_continue_read, self.string_process_output, true) {
-                Token::ERROR(_) => 
-                    self.curr_token = Token::ERROR(String::from("Unclosed string (EOS reached before 2nd ')")),
+                Token::EOS => 
+                    self.curr_token = Token::ERROR(String::from("Unclosed string (EOS reached before closing ')")),
                 other => self.curr_token = other
             }
 
@@ -148,16 +158,21 @@ impl Scanner {
 
         // extract constant
         if curr_char.is_numeric() {
+            println!("{curr_char} is a numeric, so reading a const");
+
             self.curr_token = self.read_buf_until(self.constant_continue_read, self.constant_process_output, false);
             return;
         }
 
         // extract ID and check against keyword map
         if curr_char.is_alphabetic() {
+            println!("{curr_char} is alphabetic so reading an ID");
+
             self.curr_token = self.read_buf_until(self.identifier_continue_read, self.identifier_process_output, false);
 
             if let Token::ID(id_str) = &self.curr_token {
                 if let Some(keyword) = self.keyword_map.get(id_str) {
+                    println!("{id_str} matched a keyword, NOT returning an ID");
                     self.curr_token = keyword.clone();
                 }
             }
@@ -221,6 +236,7 @@ impl Scanner {
         let mut separators = HashSet::new();
         separators.insert(' ');
         separators.insert('\n');
+        separators.insert('\t');
 
         // handle separators
         let separator_continue_read = |c: char, scanner: &Scanner| {
@@ -230,10 +246,10 @@ impl Scanner {
                 ReadStatus::Stop
             }
         };
-        let noop_process_output = |string: &str| Token::ADD; // arbitrary
+        let noop_process_output = |_string: &str| Token::ADD; // arbitrary
 
         // handle constants
-        let constant_continue_read = |c: char, scanner: &Scanner| {
+        let constant_continue_read = |c: char, _scanner: &Scanner| {
             if c.is_digit(10) {
                 ReadStatus::Continue
             } else if c.is_alphabetic() {
@@ -267,7 +283,7 @@ impl Scanner {
         };
 
         // handle strings
-        let string_continue_read = |c: char, scanner: &Scanner| {
+        let string_continue_read = |c: char, _scanner: &Scanner| {
             if c == Scanner::STRING_DELIMITER {
                 ReadStatus::Stop
             } else {
@@ -282,22 +298,27 @@ impl Scanner {
         };
         
         match File::open(file_path) {
-            Ok(file) => Ok(Scanner {
-                reader: BufReader::new(file).bytes().peekable(),
-                curr_token: Token::ADD, // abitrary
-                separator_set: separators,
-                symbol_map: symbol_map,
-                keyword_map: keyword_map,
+            Ok(file) => {
+                let mut scanner = Scanner {
+                    reader: BufReader::new(file).bytes().peekable(),
+                    curr_token: Token::ADD, // abitrary
+                    separator_set: separators,
+                    symbol_map: symbol_map,
+                    keyword_map: keyword_map,
 
-                separator_continue_read: separator_continue_read,
-                noop_process_output: noop_process_output,
-                constant_continue_read: constant_continue_read,
-                constant_process_output: constant_process_output,
-                identifier_continue_read: identifier_continue_read,
-                identifier_process_output: identifier_process_output,
-                string_continue_read: string_continue_read,
-                string_process_output: string_process_output
-            }),
+                    separator_continue_read: separator_continue_read,
+                    noop_process_output: noop_process_output,
+                    constant_continue_read: constant_continue_read,
+                    constant_process_output: constant_process_output,
+                    identifier_continue_read: identifier_continue_read,
+                    identifier_process_output: identifier_process_output,
+                    string_continue_read: string_continue_read,
+                    string_process_output: string_process_output
+                };
+
+                scanner.next_token();
+                Ok(scanner)
+            },
             Err(error) => Err(error)
         }
     }
