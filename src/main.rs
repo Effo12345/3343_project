@@ -13,28 +13,26 @@ fn main() {
         return;
     };
 
-    println!("Using filename {}", filename);
-
     let mut scanner;
     match Scanner::new(filename) {
         Ok(scanner_struct) => scanner = scanner_struct,
         Err(e) => {
-            println!("ERROR: {}", e.to_string());
+            println!("ERROR: {}: {filename}", e.to_string());
             return;
         }
     }
-
-    println!("Next token is {:?}", scanner.current_token());
-
     while scanner.current_token() != Token::EOS && !matches!(scanner.current_token(), Token::ERROR { .. }) {
         // this is technically bad since debug printing isn't stable
         // but it'll do since it's really only needed for this assignment
         let token_str = format!("{:?}", scanner.current_token());
-        println!("{}", token_str.replace('(', "[").replace(')', "]"));
+
+        // this is also comically inefficient but ¯\_(ツ)_/¯
+        let token_str: String = token_str.replacen('(', "[", 1).chars().rev().collect();
+        let token_str: String = token_str.replacen(')', "]", 1).chars().rev().collect();
+        let token_str = token_str.replace('"', "");
+        println!("{}", token_str);
 
         scanner.next_token();
-
-        println!("Next token is {:?}", scanner.current_token());
     }
 
     if let Token::ERROR(e) = scanner.current_token() {

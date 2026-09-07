@@ -91,8 +91,6 @@ impl Scanner {
                 Ok(curr_u8) => *curr_u8 as char,
                 Err(error) => return Token::ERROR(error.to_string())
             };
-
-            println!("Reader peeked {curr_char}");
             
             // either continue reading and consume char, or error out
             curr_status = continue_read(curr_char, self);
@@ -112,12 +110,9 @@ impl Scanner {
     }
 
     pub fn next_token(&mut self) {
-        println!("Flushing separators");
         // flush separators and handle EOS case
         let separator_token = self.read_buf_until(self.separator_continue_read, self.noop_process_output, true);
-        println!("Got separator token as {separator_token:?}");
         if  separator_token == Token::EOS || matches!(separator_token, Token::ERROR { .. }) {
-            println!("Reached EOS on separator flush, returning that");
             self.curr_token = Token::EOS;
             return;
         }
@@ -136,15 +131,12 @@ impl Scanner {
         // match for special characters
         let symbol_token = self.match_symbols(curr_char);
         if !matches!(symbol_token, Token::ERROR { .. }) {
-            println!("{curr_char} matches {symbol_token:?}, returning that");
             self.curr_token = symbol_token;
             return;
         }
 
         // extract string
         if curr_char == Scanner::STRING_DELIMITER {
-            println!("Found ', extracting string");
-
             self.reader.next(); // consume starting '
             match self.read_buf_until(self.string_continue_read, self.string_process_output, true) {
                 Token::EOS => 
@@ -158,21 +150,16 @@ impl Scanner {
 
         // extract constant
         if curr_char.is_numeric() {
-            println!("{curr_char} is a numeric, so reading a const");
-
             self.curr_token = self.read_buf_until(self.constant_continue_read, self.constant_process_output, false);
             return;
         }
 
         // extract ID and check against keyword map
         if curr_char.is_alphabetic() {
-            println!("{curr_char} is alphabetic so reading an ID");
-
             self.curr_token = self.read_buf_until(self.identifier_continue_read, self.identifier_process_output, false);
 
             if let Token::ID(id_str) = &self.curr_token {
                 if let Some(keyword) = self.keyword_map.get(id_str) {
-                    println!("{id_str} matched a keyword, NOT returning an ID");
                     self.curr_token = keyword.clone();
                 }
             }
@@ -237,6 +224,7 @@ impl Scanner {
         separators.insert(' ');
         separators.insert('\n');
         separators.insert('\t');
+        separators.insert('\r');
 
         // handle separators
         let separator_continue_read = |c: char, scanner: &Scanner| {
