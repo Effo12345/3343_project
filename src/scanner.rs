@@ -260,11 +260,11 @@ impl Scanner {
         };
         let constant_process_output = |string: &str| {
             let Ok(const_val) = string.parse::<u16>() else {
-                return Token::ERROR(format!("Constant {} doesn't fit in [{}, {}]", string, Scanner::CONST_MIN, Scanner::CONST_MIN));
+                return Token::ERROR(format!("Constant {} doesn't fit in [{}, {}]", string, Scanner::CONST_MIN, Scanner::CONST_MAX));
             };
 
             if const_val < Scanner::CONST_MIN || const_val > Scanner::CONST_MAX {
-                return Token::ERROR(format!("Constant {} doesn't fit in [{}, {}]", const_val, Scanner::CONST_MIN, Scanner::CONST_MIN));
+                return Token::ERROR(format!("Constant {} doesn't fit in [{}, {}]", const_val, Scanner::CONST_MIN, Scanner::CONST_MAX));
             }
 
             return Token::CONST(const_val);
@@ -272,15 +272,13 @@ impl Scanner {
 
         // handle identifiers
         let identifier_continue_read = |c: char, scanner: &Scanner| {
-            if scanner.is_separator(c) || scanner.symbol_map.contains_key(&c) {
+            if !c.is_alphanumeric() {
                 ReadStatus::Stop
             } else {
                 ReadStatus::Continue
             }
         };
-        let identifier_process_output = |string: &str| {
-            Token::ID(string.to_string())
-        };
+        let identifier_process_output = |string: &str| Token::ID(string.to_string());
 
         // handle strings
         let string_continue_read = |c: char, _scanner: &Scanner| {
@@ -290,12 +288,7 @@ impl Scanner {
                 ReadStatus::Continue
             }
         };
-        let string_process_output = |string: &str| {
-            let mut real_string = string.to_string();
-            // real_string.pop(); // remove closing '
-
-            Token::STRING(real_string)
-        };
+        let string_process_output = |string: &str| Token::STRING(string.to_string());
         
         match File::open(file_path) {
             Ok(file) => {
