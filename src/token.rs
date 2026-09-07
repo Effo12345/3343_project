@@ -1,0 +1,50 @@
+#[derive(Debug)]
+#[derive(Clone)]
+#[derive(PartialEq)]
+pub enum Token {
+    // Keyword
+	AND,
+	BEGIN,
+	CASE,
+	DO,
+	ELSE,
+	END,
+	FOR,
+	IF,
+	IN,
+	INTEGER,
+	IS,
+	NEW,
+	NOT,
+	OBJECT,
+	OR,
+	PRINT,
+	PROCEDURE,
+	READ,
+	RETURN,
+	THEN,
+	// Symbols
+	ADD,
+	SUBTRACT,
+	MULTIPLY,
+	DIVIDE,
+	ASSIGN,
+	EQUAL,
+	LESS,
+	COLON,
+	SEMICOLON,
+	PERIOD,
+	COMMA,
+	LPAREN,
+	RPAREN,
+	LSQUARE,
+	RSQUARE,
+	LCURL,
+	RCURL,
+	// Special
+	CONST(u16),
+	ID(String),
+	STRING(String),
+	EOS,
+	ERROR(String)
+}
