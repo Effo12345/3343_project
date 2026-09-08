@@ -4,3 +4,4 @@
 !*.rs
 !src
 !.gitignore
+!Cargo.*
