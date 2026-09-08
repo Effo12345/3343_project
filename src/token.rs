@@ -1,6 +1,4 @@
-#[derive(Debug)]
-#[derive(Clone)]
-#[derive(PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // Keyword
 	AND,
@@ -23,7 +21,7 @@ pub enum Token {
 	READ,
 	RETURN,
 	THEN,
-	// Symbols
+	// symbols
 	ADD,
 	SUBTRACT,
 	MULTIPLY,
@@ -41,7 +39,7 @@ pub enum Token {
 	RSQUARE,
 	LCURL,
 	RCURL,
-	// Special
+	// special
 	CONST(u16),
 	ID(String),
 	STRING(String),

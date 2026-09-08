@@ -3,7 +3,7 @@ use crate::token::Token;
 use std::fs::File;
 use std::io::{BufReader, Read, Bytes};
 use std::iter::Peekable;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(PartialEq)]
 enum ReadStatus {
@@ -17,7 +17,6 @@ pub struct Scanner {
     // allow peaking for the = vs. == case
     reader: Peekable<Bytes<BufReader<File>>>,
     curr_token: Token,
-    separator_set: HashSet<char>,
     symbol_map: HashMap<char, Token>,
     keyword_map: HashMap<String, Token>,
 
@@ -39,10 +38,6 @@ impl Scanner {
     const CONST_MIN: u16 = 0;
     const CONST_MAX: u16 = 8191;
 
-    fn is_separator(&self, c: char) -> bool {
-        self.separator_set.contains(&c)
-    }
-
     fn match_symbols(&mut self, c: char) -> Token {
         let mut output_token = 
         match self.symbol_map.get(&c) {
@@ -58,7 +53,7 @@ impl Scanner {
             let mut next_char = ' ';
             if let Some(peek_res) = self.reader.peek() {
                 if let Ok(byte_read) = peek_res {
-                    next_char = *byte_read as char;
+                    next_char = *byte_read as char; // this assumes STRICTLY ASCII encoding
                 }
             }
 
@@ -68,7 +63,7 @@ impl Scanner {
             }
         }
 
-        return output_token;
+        output_token
     }
 
     fn read_buf_until(&mut self, continue_read: impl Fn(char, &Scanner) -> ReadStatus, process_output: impl Fn(&str) -> Token, eos_on_eos: bool) -> Token {
@@ -88,7 +83,7 @@ impl Scanner {
             // handle read error
             let curr_char: char = 
             match peek_res {
-                Ok(curr_u8) => *curr_u8 as char,
+                Ok(curr_u8) => *curr_u8 as char, // this assumes STRICTLY ASCII encoding
                 Err(error) => return Token::ERROR(error.to_string())
             };
             
@@ -104,9 +99,8 @@ impl Scanner {
         match curr_status {
             ReadStatus::Stop => process_output(&string),
             ReadStatus::Error(error_str) => Token::ERROR(error_str),
-            _ => Token::EOS // arbitrary, should never happen
+            _ => unreachable!()
         }
-
     }
 
     pub fn next_token(&mut self) {
@@ -121,7 +115,7 @@ impl Scanner {
         // we know it exists since !EOS guarantee by above
         let curr_char: char;
         match self.reader.peek().expect("This should never happen") {
-            Ok(byte) => curr_char = *byte as char,
+            Ok(byte) => curr_char = *byte as char, // this assumes STRICTLY ASCII encoding
             Err(e) => {
                 self.curr_token = Token::ERROR(e.to_string());
                 return;
@@ -176,6 +170,8 @@ impl Scanner {
 
     // if desired, everything in here could be exposed for the user to set
     // but i want to keep the main function clean so i'll leave it here
+    // doing stuff with maps like this is also probably waaay slower than a match statement
+    // too c++ brained i suppose
     pub fn new(file_path: &str) -> Result<Self, std::io::Error> {
         // special chars
         let mut symbol_map = HashMap::new();
@@ -219,16 +215,12 @@ impl Scanner {
         keyword_map.insert(String::from("return"), Token::RETURN);
         keyword_map.insert(String::from("then"), Token::THEN);
 
-        // separators
-        let mut separators = HashSet::new();
-        separators.insert(' ');
-        separators.insert('\n');
-        separators.insert('\t');
-        separators.insert('\r');
+        // in retrospect using closures like this was really over the top
+        // but i just think they're neat :)
 
         // handle separators
-        let separator_continue_read = |c: char, scanner: &Scanner| {
-            if scanner.is_separator(c) {
+        let separator_continue_read = |c: char, _scanner: &Scanner| {
+            if c.is_ascii_whitespace() {
                 ReadStatus::Continue
             } else {
                 ReadStatus::Stop
@@ -253,7 +245,7 @@ impl Scanner {
                 return Token::ERROR(format!("Constant {} doesn't fit in [{}, {}]", const_val, Scanner::CONST_MIN, Scanner::CONST_MAX));
             }
 
-            return Token::CONST(const_val);
+            Token::CONST(const_val)
         };
 
         // handle identifiers
@@ -281,18 +273,16 @@ impl Scanner {
                 let mut scanner = Scanner {
                     reader: BufReader::new(file).bytes().peekable(),
                     curr_token: Token::ADD, // abitrary
-                    separator_set: separators,
-                    symbol_map: symbol_map,
-                    keyword_map: keyword_map,
-
-                    separator_continue_read: separator_continue_read,
-                    noop_process_output: noop_process_output,
-                    constant_continue_read: constant_continue_read,
-                    constant_process_output: constant_process_output,
-                    identifier_continue_read: identifier_continue_read,
-                    identifier_process_output: identifier_process_output,
-                    string_continue_read: string_continue_read,
-                    string_process_output: string_process_output
+                    symbol_map,
+                    keyword_map,
+                    separator_continue_read,
+                    noop_process_output,
+                    constant_continue_read,
+                    constant_process_output,
+                    identifier_continue_read,
+                    identifier_process_output,
+                    string_continue_read,
+                    string_process_output
                 };
 
                 scanner.next_token();
