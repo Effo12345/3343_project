@@ -167,7 +167,7 @@ impl Scanner {
         }
 
         // error for unknown symbol if unmatched at ths point
-        self.curr_token = Token::ERROR(format!("Unknown symbol: \"{curr_char}\""));
+        self.curr_token = Token::ERROR(format!("Unrecognized symbol: \"{curr_char}\""));
     }
 
     pub fn current_token(&self) -> Token {
@@ -240,8 +240,6 @@ impl Scanner {
         let constant_continue_read = |c: char, _scanner: &Scanner| {
             if c.is_digit(10) {
                 ReadStatus::Continue
-            } else if c.is_alphabetic() {
-                ReadStatus::Error(String::from("Identifier cannot start with digits"))
             } else {
                 ReadStatus::Stop
             }
