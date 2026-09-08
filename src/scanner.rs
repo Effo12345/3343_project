@@ -257,7 +257,7 @@ impl Scanner {
         };
 
         // handle identifiers
-        let identifier_continue_read = |c: char, scanner: &Scanner| {
+        let identifier_continue_read = |c: char, _scanner: &Scanner| {
             if !c.is_alphanumeric() {
                 ReadStatus::Stop
             } else {
