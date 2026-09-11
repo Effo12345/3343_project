@@ -40,6 +40,8 @@ pub enum Token {
 	LCURL,
 	RCURL,
 	// special
+	// let the scanner caller extract the data from the enum itself
+	// rather than having separate getter functions
 	CONST(u16),
 	ID(String),
 	STRING(String),
