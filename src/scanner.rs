@@ -38,6 +38,7 @@ impl Scanner {
     const CONST_MIN: u16 = 0;
     const CONST_MAX: u16 = 8191;
 
+    // more idiomatic rust would return a result here
     fn match_symbols(&mut self, c: char) -> Token {
         let mut output_token = 
         match self.symbol_map.get(&c) {

@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    // Keyword
+    // keyword
 	AND,
 	BEGIN,
 	CASE,
