@@ -3,7 +3,8 @@ use crate::{scanner::Scanner, token::Token};
 use super::{Expr, Cond, StmtSeq};
 
 pub struct Loop {
-    assignment: Box<Expr>,
+    assignment_id: String,
+    assignment_expr: Box<Expr>,
     cond: Box<Cond>,
     increment: Box<Expr>,
     statements: Box<StmtSeq>
@@ -21,8 +22,18 @@ impl Loop {
             return Err(format!("Expected ( in for loop, got {:?}", s.current_token()));
         }
         s.next_token();
+        
+        let Token::ID(assignment_id) = s.current_token() else {
+            return Err(format!("Expected an identifier in for loop assignment, got {:?}", s.current_token()));
+        };
+        s.next_token();
 
-        let assignment = Expr::new(s)?;
+        if s.current_token() != Token::ASSIGN {
+            return Err(format!("Expected = in for loop assignment, got {:?}", s.current_token()));
+        }
+        s.next_token();
+
+        let assignment_expr = Expr::new(s)?;
 
         if s.current_token() != Token::SEMICOLON {
             return Err(format!("Missing ; in for loop"));
@@ -55,6 +66,6 @@ impl Loop {
         }
         s.next_token();
 
-        Ok(Box::new(Loop{assignment, cond, increment, statements}))
+        Ok(Box::new(Loop{assignment_id, assignment_expr, cond, increment, statements}))
     }
 }

@@ -77,6 +77,11 @@ impl Assign {
         };
         s.next_token();
 
+        if s.current_token() != Token::COMMA {
+            return Err(format!("Expected ',' between accessor and expression for {id}, got {:?}", s.current_token()));
+        }
+        s.next_token();
+
         let expr = Expr::new(s)?;
 
         if s.current_token() != Token::RPAREN {

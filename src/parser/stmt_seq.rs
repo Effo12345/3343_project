@@ -12,11 +12,11 @@ impl StmtSeq {
         // parse a stmt to start, then decide if we need the seq later
         let stmt = Stmt::new(s)?;
 
-        if s.current_token() != Token::END {
-            Ok(Box::new(StmtSeq::Seq(stmt, StmtSeq::new(s)?)))
-        }
-        else {
-            Ok(Box::new(StmtSeq::Stmt(stmt)))
-        }
+        Ok(Box::new(
+            match s.current_token() {
+                Token::END | Token::ELSE => StmtSeq::Stmt(stmt),
+                _ => StmtSeq::Seq(stmt, StmtSeq::new(s)?)
+            }
+        ))
     }
 }

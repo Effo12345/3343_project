@@ -43,6 +43,7 @@ impl Factor {
         let Token::STRING(accessor) = s.current_token() else {
             return Err(format!("Expected string in subscripting factor, got {:?}", s.current_token()));
         };
+        s.next_token();
 
         if s.current_token() != Token::RSQUARE {
             return Err(format!("Missing ] in subscripted factor, got {:?}", s.current_token()));
@@ -54,7 +55,10 @@ impl Factor {
 
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
         match s.current_token() {
-            Token::CONST(constant) => Ok(Box::new(Factor::Const(constant))),
+            Token::CONST(constant) => {
+                s.next_token();
+                Ok(Box::new(Factor::Const(constant)))
+            },
             Token::LPAREN => Ok(Box::new(Factor::parse_parenthetical(s)?)),
             Token::ID(id) => Ok(Box::new(Factor::parse_id(id, s)?)),
             _ => Err(format!("Unexpected token at start of factor: {:?}", s.current_token()))

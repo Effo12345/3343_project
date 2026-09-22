@@ -46,7 +46,11 @@ impl Cond {
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
         Ok(Box::new(
             match s.current_token() {
-                Token::NOT => Cond::Not(Cond::new(s)?),
+                Token::NOT => {
+                    // consume not token
+                    s.next_token();
+                    Cond::Not(Cond::new(s)?)
+                }
                 Token::LSQUARE => Cond::parse_bracket(s)?,
                 _ => Cond::parse_bare_and_or(s)?
             }

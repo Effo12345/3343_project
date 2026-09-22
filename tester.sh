@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# If running this script locally, you may need to remove the "timeout 5" parts
-
 runner=$1
 
 if test -f src/main.rs
@@ -22,16 +20,14 @@ fi
 score=0
 error=0
 
-for value in {1..13}
+for value in {1..26}
 do
 	echo ""
 	echo "Running ${value}.code"
 	timeout 5 ${runner} Correct/${value}.code > Correct/${value}.student
-	echo ""
-	echo "Comparing with ${value}.expected"
 	#Check for correct print
 	tr -d '[:space:]' < Correct/${value}.student > temp1
-	tr -d '[:space:]' < Correct/${value}.expected > temp2
+	tr -d '[:space:]' < Correct/${value}.code > temp2
 	echo "Comparing input and output"
 	if cmp -s "temp1" "temp2"; then
 		echo "Print looks good"
@@ -45,64 +41,113 @@ rm temp1
 rm temp2
 
 echo ""
-echo ""
-
 echo "Running error cases:"
 echo ""
-echo "Running 1.error:"
-echo "----------"
-timeout 5 ${runner} Error/1.code
-echo "----------"
-read -n 1 -p "Error is '!' in file. Error message related to that? (y/n)" mainmenuinput
+echo "Running 01.error:"
+timeout 5 ${runner} Error/01.code
+echo ""
+echo ""
+read -n 1 -p "Error is extra + in expression. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 02.error:"
+timeout 5 ${runner} Error/02.code
+echo ""
+echo ""
+read -n 1 -p "Error is undeclared variable 'y' being used. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 03.error:"
+timeout 5 ${runner} Error/03.code
+echo ""
+echo ""
+read -n 1 -p "Error is variable 'x' declared twice in the same scope. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 04.error:"
+timeout 5 ${runner} Error/04.code
+echo ""
+echo ""
+read -n 1 -p "Error is if statement ends with 'else' missing. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 05.error:"
+timeout 5 ${runner} Error/05.code
+echo ""
+echo ""
+read -n 1 -p "Error is integer used in 'new record' declaration. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 06.error:"
+timeout 5 ${runner} Error/06.code
+echo ""
+echo ""
+read -n 1 -p "Error is 'do' in if statement. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 07.error:"
+timeout 5 ${runner} Error/07.code
+echo ""
+echo ""
+read -n 1 -p "Error is equals used in assignment statement. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 08.error:"
+timeout 5 ${runner} Error/08.code
+echo ""
+echo ""
+read -n 1 -p "Error is [string] used with an integer variable. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 09.error:"
+timeout 5 ${runner} Error/09.code
+echo ""
+echo ""
+read -n 1 -p "Error is extra tokens after end. Error message related to that? (y/n)" mainmenuinput
+if [ $mainmenuinput = "y" ]; then
+	error=$(($error + 1))
+fi
+echo ""
+echo ""
+echo "Running 10.error:"
+timeout 5 ${runner} Error/10.code
+echo ""
+echo ""
+read -n 1 -p "Error is missing left parenthesis in expression. Error message related to that? (y/n)" mainmenuinput
 if [ $mainmenuinput = "y" ]; then
 	error=$(($error + 1))
 fi
 
-echo ""
-
-echo "Running error cases:"
-echo ""
-echo "Running 2.error:"
-echo "----------"
-timeout 5 ${runner} Error/2.code
-echo "----------"
-read -n 1 -p "Error is '?' in file. Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
 
 echo ""
-
-echo "Running error cases:"
 echo ""
-echo "Running 3.error:"
-echo "----------"
-timeout 5 ${runner} Error/3.code
-echo "----------"
-read -n 1 -p "Error is '$' in file. Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
-
-echo ""
-
-echo "Running error cases:"
-echo ""
-echo "Running 4.error:"
-echo "----------"
-timeout 5 ${runner} Error/4.code
-echo "----------"
-read -n 1 -p "Error is too large constant in file. Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
-
-echo ""
-
-echo "Correct cases score out of 13:"
+echo "Correct cases score out of 26:"
 echo $score
-echo "Error cases score out of 4:"
+echo "Error cases score out of 10:"
 echo $error
 
-
-echo Done!
+echo "Done!"
