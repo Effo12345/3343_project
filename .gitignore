@@ -1,8 +1,16 @@
-#ignore all kind of files
+# Ignore everything by default.
 *
-#except rs files
-!*.rs
-!src
+
+# Allow Git to traverse src and track every file below it.
+!src/
+!src/**/
+!src/**
+
+# Keep this ignore configuration tracked.
 !.gitignore
+
+# Keep Cargo files
 !Cargo.*
+
+# Keep assignment-specific files
 !tester.sh
