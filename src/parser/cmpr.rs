@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
 use super::Expr;
@@ -22,6 +24,15 @@ impl Cmpr {
                 Ok(Box::new(Cmpr::LT(expr1, Expr::new(s)?)))
             },
             _ => Err(format!("Unexpected token at start of comparison: {:?}", s.current_token()))
+        }
+    }
+}
+
+impl fmt::Display for Cmpr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Cmpr::Equality(expr1, expr2) => write!(f, "{expr1} == {expr2}"),
+            Cmpr::LT(expr1, expr2) => write!(f, "{expr1} < {expr2}")
         }
     }
 }

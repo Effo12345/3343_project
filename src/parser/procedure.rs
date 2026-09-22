@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::{DeclSeq, StmtSeq};
+use super::{write_indent, DeclSeq, PrettyPrint, StmtSeq};
 
 pub enum Procedure {
     WithDecl(String, Box<DeclSeq>, Box<StmtSeq>),
@@ -43,5 +45,44 @@ impl Procedure {
             }
         ))
 
+    }
+}
+
+impl PrettyPrint for Procedure {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        match self {
+            Procedure::WithDecl(id, decl_seq, stmt_seq) => {
+                write_indent(f, level)?;
+                writeln!(f, "procedure {id} is")?;
+
+                decl_seq.fmt_indented(f, level + 1)?;
+
+                write_indent(f, level)?;
+                writeln!(f, "begin")?;
+
+                stmt_seq.fmt_indented(f, level + 1)?;
+
+                write_indent(f, level)?;
+                writeln!(f, "end")
+            },
+            Procedure::NoDecl(id, stmt_seq) => {
+                write_indent(f, level)?;
+                writeln!(f, "procedure {id} is")?;
+
+                write_indent(f, level)?;
+                writeln!(f, "begin")?;
+
+                stmt_seq.fmt_indented(f, level + 1)?;
+
+                write_indent(f, level)?;
+                writeln!(f, "end")
+            }
+        }
+    }
+}
+
+impl fmt::Display for Procedure {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

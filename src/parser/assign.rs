@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::Expr;
+use super::{write_indent, Expr, PrettyPrint};
 
 pub enum Assign {
     Expr(String, Box<Expr>),
@@ -126,5 +128,24 @@ impl Assign {
             Token::COLON => Ok(Box::new(Assign::parse_colon(id, s)?)),
             _ => Err(format!("Unexpected token at the beginning of assignment: {:?}", s.current_token()))
         }
+    }
+}
+
+impl PrettyPrint for Assign {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        write_indent(f, level)?;
+
+        match self {
+            Assign::Expr(id, expr) => writeln!(f, "{id} = {expr};"),
+            Assign::Subscript(id, accessor, expr) => writeln!(f, "{id}['{accessor}'] = {expr};"),
+            Assign::Object(id, accessor, expr) => writeln!(f, "{id} = new object('{accessor}', {expr});"),
+            Assign::Colon(id1, id2) => writeln!(f, "{id1} : {id2};")
+        }
+    }
+}
+
+impl fmt::Display for Assign {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

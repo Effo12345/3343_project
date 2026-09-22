@@ -1,4 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
+
+use super::{write_indent, PrettyPrint};
 
 pub struct DeclObj {
     id: String
@@ -23,5 +27,18 @@ impl DeclObj {
         s.next_token();
 
         Ok(Box::new(DeclObj{id}))
+    }
+}
+
+impl PrettyPrint for DeclObj {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        write_indent(f, level)?;
+        writeln!(f, "object {};", self.id)
+    }
+}
+
+impl fmt::Display for DeclObj {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

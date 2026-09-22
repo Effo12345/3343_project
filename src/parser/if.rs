@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::{Cond, StmtSeq};
+use super::{write_indent, Cond, PrettyPrint, StmtSeq};
 
 pub enum If {
     If(Box<Cond>, Box<StmtSeq>),
@@ -43,5 +45,41 @@ impl If {
                 None => If::If(cond, stmt_seq)
             }
         ))
+    }
+}
+
+impl PrettyPrint for If {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        match self {
+            If::If(cond, stmt_seq) => {
+                write_indent(f, level)?;
+                writeln!(f, "if {cond} then")?;
+
+                stmt_seq.fmt_indented(f, level + 1)?;
+
+                write_indent(f, level)?;
+                writeln!(f, "end")
+            },
+            If::IfElse(cond, true_seq, else_seq) => {
+                write_indent(f, level)?;
+                writeln!(f, "if {cond} then")?;
+
+                true_seq.fmt_indented(f, level + 1)?;
+
+                write_indent(f, level)?;
+                writeln!(f, "else")?;
+
+                else_seq.fmt_indented(f, level + 1)?;
+
+                write_indent(f, level)?;
+                writeln!(f, "end")
+            }
+        }
+    }
+}
+
+impl fmt::Display for If {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

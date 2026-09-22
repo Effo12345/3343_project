@@ -4,7 +4,6 @@ mod parser;
 
 use std::env;
 
-use token::Token;
 use scanner::Scanner;
 use parser::Procedure;
 
@@ -23,7 +22,7 @@ fn main() {
     };
 
     match Procedure::new(&mut scanner) {
-        Ok(procedure) => println!("Got a complete procedure!"),
+        Ok(procedure) => print!("{procedure}"),
         Err(e) => println!("ERROR: {e}")
     }
 

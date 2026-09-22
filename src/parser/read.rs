@@ -1,4 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
+
+use super::{write_indent, PrettyPrint};
 
 pub struct Read {
     id: String
@@ -33,5 +37,18 @@ impl Read {
         s.next_token();
 
         Ok(Box::new(Read{id}))
+    }
+}
+
+impl PrettyPrint for Read {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        write_indent(f, level)?;
+        writeln!(f, "read({});", self.id)
+    }
+}
+
+impl fmt::Display for Read {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

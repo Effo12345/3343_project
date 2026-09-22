@@ -1,3 +1,5 @@
+use std::fmt;
+
 mod assign;
 mod cmpr;
 mod cond;
@@ -34,3 +36,13 @@ pub use read::Read;
 pub use stmt::Stmt;
 pub use stmt_seq::StmtSeq;
 pub use term::Term;
+
+const INDENT_WIDTH: usize = 4;
+
+pub(super) trait PrettyPrint {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result;
+}
+
+pub(super) fn write_indent(f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+    write!(f, "{:width$}", "", width = level * INDENT_WIDTH)
+}

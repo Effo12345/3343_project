@@ -1,4 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
+
+use super::{write_indent, PrettyPrint};
 
 pub struct DeclInteger {
     id: String
@@ -23,5 +27,18 @@ impl DeclInteger {
         s.next_token();
 
         Ok(Box::new(DeclInteger{id}))
+    }
+}
+
+impl PrettyPrint for DeclInteger {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        write_indent(f, level)?;
+        writeln!(f, "integer {};", self.id)
+    }
+}
+
+impl fmt::Display for DeclInteger {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

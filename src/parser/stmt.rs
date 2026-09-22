@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::{Assign, If, Loop, Print, Read, Decl};
+use super::{Assign, Decl, If, Loop, PrettyPrint, Print, Read};
 
 pub enum Stmt {
     Assign(Box<Assign>),
@@ -22,5 +24,24 @@ impl Stmt {
             Token::INTEGER | Token::OBJECT => Ok(Box::new(Stmt::Decl(Decl::new(s)?))),
             _ => Err(format!("Unexpected token at the beginning of statement: {:?}", s.current_token()))
         }
+    }
+}
+
+impl PrettyPrint for Stmt {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        match self {
+            Stmt::Assign(assign) => assign.fmt_indented(f, level),
+            Stmt::If(boxed_if) => boxed_if.fmt_indented(f, level),
+            Stmt::Loop(boxed_loop) => boxed_loop.fmt_indented(f, level),
+            Stmt::Print(print) => print.fmt_indented(f, level),
+            Stmt::Read(read) => read.fmt_indented(f, level),
+            Stmt::Decl(decl) => decl.fmt_indented(f, level)
+        }
+    }
+}
+
+impl fmt::Display for Stmt {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

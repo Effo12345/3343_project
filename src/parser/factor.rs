@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
 use super::Expr;
@@ -62,6 +64,17 @@ impl Factor {
             Token::LPAREN => Ok(Box::new(Factor::parse_parenthetical(s)?)),
             Token::ID(id) => Ok(Box::new(Factor::parse_id(id, s)?)),
             _ => Err(format!("Unexpected token at start of factor: {:?}", s.current_token()))
+        }
+    }
+}
+
+impl fmt::Display for Factor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Factor::Id(id) => write!(f, "{id}"),
+            Factor::IdSubscript(id, accessor) => write!(f, "{id}['{accessor}']"),
+            Factor::Const(val) => write!(f, "{val}"),
+            Factor::SubExpr(expr) => write!(f, "({expr})")
         }
     }
 }

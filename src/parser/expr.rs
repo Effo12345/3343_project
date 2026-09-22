@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
 use super::Term;
@@ -26,5 +28,15 @@ impl Expr {
                 _ => Expr::Term(term)
             }
         ))
+    }
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expr::Term(term) => write!(f, "{term}"),
+            Expr::Add(term, expr) => write!(f, "{term} + {expr}"),
+            Expr::Sub(term, expr) => write!(f, "{term} - {expr}")
+        }
     }
 }

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
 use super::Cmpr;
@@ -55,5 +57,17 @@ impl Cond {
                 _ => Cond::parse_bare_and_or(s)?
             }
         ))
+    }
+}
+
+impl fmt::Display for Cond {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Cond::Cmpr(cmpr) => write!(f, "{cmpr}"),
+            Cond::Not(cond) => write!(f, "not {cond}"),
+            Cond::Bracket(cond) => write!(f, "[{cond}]"),
+            Cond::Or(cmpr, cond) => write!(f, "{cmpr} or {cond}"),
+            Cond::And(cmpr, cond) => write!(f, "{cmpr} and {cond}")
+        }
     }
 }

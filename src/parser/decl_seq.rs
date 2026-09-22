@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::Decl;
+use super::{Decl, PrettyPrint};
 
 pub enum DeclSeq {
     Decl(Box<Decl>),
@@ -19,5 +21,23 @@ impl DeclSeq {
                 DeclSeq::Decl(decl)
             }
         ))
+    }
+}
+
+impl PrettyPrint for DeclSeq {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        match self {
+            DeclSeq::Decl(decl) => decl.fmt_indented(f, level),
+            DeclSeq::Seq(decl, decl_seq) => {
+                decl.fmt_indented(f, level)?;
+                decl_seq.fmt_indented(f, level)
+            }
+        }
+    }
+}
+
+impl fmt::Display for DeclSeq {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

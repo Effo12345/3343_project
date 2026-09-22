@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::{Expr, Cond, StmtSeq};
+use super::{write_indent, Cond, Expr, PrettyPrint, StmtSeq};
 
 pub struct Loop {
     assignment_id: String,
@@ -67,5 +69,23 @@ impl Loop {
         s.next_token();
 
         Ok(Box::new(Loop{assignment_id, assignment_expr, cond, increment, statements}))
+    }
+}
+
+impl PrettyPrint for Loop {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        write_indent(f, level)?;
+        writeln!(f, "for ({} = {}; {}; {}) do", self.assignment_id, self.assignment_expr, self.cond, self.increment)?;
+
+        self.statements.fmt_indented(f, level + 1)?;
+
+        write_indent(f, level)?;
+        writeln!(f, "end")
+    }
+}
+
+impl fmt::Display for Loop {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }

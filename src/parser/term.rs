@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
 use super::Factor;
@@ -26,5 +28,15 @@ impl Term {
                 _ => Term::Fac(factor)
             }
         ))
+    }
+}
+
+impl fmt::Display for Term {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Term::Fac(factor) => write!(f, "{factor}"),
+            Term::Mult(factor, term) => write!(f, "{factor} * {term}"),
+            Term::Div(factor, term) => write!(f, "{factor} / {term}")
+        }
     }
 }

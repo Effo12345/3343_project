@@ -1,6 +1,8 @@
+use std::fmt;
+
 use crate::{scanner::Scanner, token::Token};
 
-use super::Expr;
+use super::{write_indent, Expr, PrettyPrint};
 
 pub struct Print {
     expr: Box<Expr>
@@ -32,5 +34,18 @@ impl Print {
         s.next_token();
 
         Ok(Box::new(Print{expr}))
+    }
+}
+
+impl PrettyPrint for Print {
+    fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        write_indent(f, level)?;
+        writeln!(f, "print({});", self.expr)
+    }
+}
+
+impl fmt::Display for Print {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.fmt_indented(f, 0)
     }
 }
