@@ -4,6 +4,7 @@ use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{write_indent, DeclSeq, PrettyPrint, StmtSeq};
 
+// declarations before begin are optional
 pub enum Procedure {
     WithDecl(String, Box<DeclSeq>, Box<StmtSeq>),
     NoDecl(String, Box<StmtSeq>)
@@ -11,6 +12,7 @@ pub enum Procedure {
 
 impl Procedure {
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
+        // read the procedure header
         if s.current_token() != Token::PROCEDURE {
             return Err(format!("Expected 'procedure' but got {:?}", s.current_token()));
         }
@@ -26,6 +28,7 @@ impl Procedure {
         }
         s.next_token();
 
+        // begin means there are no global declarations to parse
         let decl_seq = match s.current_token() {
             Token::BEGIN => None,
             _ => Some(DeclSeq::new(s)?)
@@ -36,6 +39,7 @@ impl Procedure {
         }
         s.next_token();
 
+        // every procedure needs at least one statement
         let stmt_seq = StmtSeq::new(s)?;
 
         if s.current_token() != Token::END {
@@ -43,6 +47,7 @@ impl Procedure {
         }
         s.next_token();
 
+        // the procedure must be the only thing in the file
         if s.current_token() != Token::EOS {
             return Err(format!("Expected end of file following procedure end but got {:?}", s.current_token()));
         }
@@ -78,6 +83,7 @@ impl Procedure {
     }
 }
 
+// indent declarations and statements, keeping the procedure markers aligned
 impl PrettyPrint for Procedure {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         match self {
@@ -111,6 +117,7 @@ impl PrettyPrint for Procedure {
     }
 }
 
+// normal Display starts at the outermost indentation level
 impl fmt::Display for Procedure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.fmt_indented(f, 0)

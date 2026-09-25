@@ -20,6 +20,7 @@ pub struct Scanner {
     symbol_map: HashMap<char, Token>,
     keyword_map: HashMap<String, Token>,
 
+    // keep the read rules and output conversion together for each token type
     separator_continue_read: fn(char, &Scanner) -> ReadStatus,
     noop_process_output: fn(&str) -> Token,
     constant_continue_read: fn(char, &Scanner) -> ReadStatus,
@@ -67,6 +68,7 @@ impl Scanner {
         output_token
     }
 
+    // leave the stopping character for the caller or the next token
     fn read_buf_until(&mut self, continue_read: impl Fn(char, &Scanner) -> ReadStatus, process_output: impl Fn(&str) -> Token, eos_on_eos: bool) -> Token {
         let mut string = String::with_capacity(Scanner::BUF_DEFAULT_LENGTH);
         let mut curr_status = ReadStatus::Continue;
@@ -97,6 +99,7 @@ impl Scanner {
             }
         }
 
+        // turn the collected characters into a token, or pass the error along
         match curr_status {
             ReadStatus::Stop => process_output(&string),
             ReadStatus::Error(error_str) => Token::ERROR(error_str),
@@ -286,6 +289,7 @@ impl Scanner {
                     string_process_output
                 };
 
+                // have a token ready as soon as the scanner is created
                 scanner.next_token();
                 Ok(scanner)
             },

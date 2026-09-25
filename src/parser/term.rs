@@ -4,6 +4,7 @@ use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Factor;
 
+// keep multiplication and division inside the term
 pub enum Term {
     Fac(Box<Factor>),
     Mult(Box<Factor>, Box<Term>),
@@ -30,6 +31,7 @@ impl Term {
         ))
     }
 
+    // check each factor and the rest of the term
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Term::Fac(fac) => fac.validate(vars),
@@ -45,6 +47,7 @@ impl Term {
     }
 }
 
+// print the factors and any remaining term
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

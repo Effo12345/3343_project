@@ -15,6 +15,7 @@ impl StmtSeq {
         let stmt = Stmt::new(s)?;
 
         Ok(Box::new(
+            // leave the closing keyword for the surrounding if, loop, or procedure
             match s.current_token() {
                 Token::END | Token::ELSE => StmtSeq::Stmt(stmt),
                 _ => StmtSeq::Seq(stmt, StmtSeq::new(s)?)
@@ -22,6 +23,7 @@ impl StmtSeq {
         ))
     }
 
+    // validate in order so a declaration only applies to later statements
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             StmtSeq::Stmt(stmt) => stmt.validate(vars),
@@ -33,6 +35,7 @@ impl StmtSeq {
     }
 }
 
+// all statements in this sequence belong at the same indentation level
 impl PrettyPrint for StmtSeq {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         match self {

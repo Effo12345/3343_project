@@ -4,6 +4,7 @@ use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Cmpr;
 
+// keep brackets and not in the tree for printing later
 pub enum Cond {
     Cmpr(Box<Cmpr>),
     Not(Box<Cond>),
@@ -17,6 +18,7 @@ impl Cond {
         // [ checked by new, consume it
         s.next_token();
 
+        // parse the entire condition inside the brackets
         let cond = Cond::new(s)?;
 
         if s.current_token() != Token::RSQUARE {
@@ -28,6 +30,7 @@ impl Cond {
     }
 
     fn parse_bare_and_or(s: &mut Scanner) -> Result<Self, String> {
+        // start with a comparison, then check for a connecting operator
         let cmpr = Cmpr::new(s)?;
 
         Ok(
@@ -45,6 +48,7 @@ impl Cond {
         )
     }
 
+    // not and brackets start their own condition forms
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
         Ok(Box::new(
             match s.current_token() {
@@ -59,6 +63,7 @@ impl Cond {
         ))
     }
 
+    // check variables in every comparison, including nested conditions
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Cond::Cmpr(cmpr) => cmpr.validate(vars),
@@ -71,6 +76,7 @@ impl Cond {
     }
 }
 
+// put the condition operators and brackets back
 impl fmt::Display for Cond {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

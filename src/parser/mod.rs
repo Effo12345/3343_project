@@ -43,10 +43,12 @@ pub use validation::{VarType, VarStack, ScopedVar};
 
 const INDENT_WIDTH: usize = 4;
 
+// carry the nesting level down through the tree while printing
 pub(super) trait PrettyPrint {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result;
 }
 
+// each level gets the same number of spaces
 pub(super) fn write_indent(f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
     write!(f, "{:width$}", "", width = level * INDENT_WIDTH)
 }

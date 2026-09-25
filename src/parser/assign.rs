@@ -4,6 +4,7 @@ use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Tok
 
 use super::{write_indent, Expr, PrettyPrint};
 
+// keep the different assignment forms separate for validation
 pub enum Assign {
     Expr(String, Box<Expr>),
     Subscript(String, String, Box<Expr>), // id, accessor, expr
@@ -35,6 +36,7 @@ impl Assign {
         // [ checked by new, consume it
         s.next_token();
 
+        // the object key goes inside the brackets
         let Token::STRING(accessor) = s.current_token() else {
             return Err(format!("Expected string accessor in subscripting assignment for {id}, got {:?}", s.current_token()));
         };
@@ -45,6 +47,7 @@ impl Assign {
         }
         s.next_token();
 
+        // the subscript is followed by = and an expression
         if s.current_token() != Token::ASSIGN {
             return Err(format!("Expected assignment operator in subscripting assignment for {id}, got {:?}", s.current_token()));
         }
@@ -53,7 +56,7 @@ impl Assign {
         let expr = Expr::new(s)?;
 
         if s.current_token() != Token::SEMICOLON {
-            return Err(format!("Missing ; in subscripting assignment: {id}"));
+            return Err(format!("Missing ; in subscripting assignment to variable: {id}"));
         }
         s.next_token();
 
@@ -74,6 +77,7 @@ impl Assign {
         }
         s.next_token();
 
+        // new object takes a string key and an initial value
         let Token::STRING(accessor) = s.current_token() else {
             return Err(format!("Expected accessor in object assignment for {id}, got {:?}", s.current_token()));
         };
@@ -92,7 +96,7 @@ impl Assign {
         s.next_token();
 
         if s.current_token() != Token::SEMICOLON {
-            return Err(format!("Missing ; in object assignment: {id}"));
+            return Err(format!("Missing ; in object assignment to variable: {id}"));
         }
         s.next_token();
 
@@ -103,25 +107,28 @@ impl Assign {
         // : checked by new, consume it
         s.next_token();
 
+        // colon assignment takes another ID instead of an expression
         let Token::ID(id2) = s.current_token() else {
             return Err(format!("Expected second identifier in : assignment for {id}, got {:?}", s.current_token()));
         };
         s.next_token();
 
         if s.current_token() != Token::SEMICOLON {
-            return Err(format!("Missing ; in colon assignment: {id}"));
+            return Err(format!("Missing ; in colon assignment to variable: {id}"));
         }
         s.next_token();
 
         Ok(Assign::Colon(id, id2))
     }
 
+    // all assignment forms start with the destination ID
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
         let Token::ID(id) = s.current_token() else {
             return Err(format!("Expected ID at start of assignment but got {:?}", s.current_token()))
         };
         s.next_token();
 
+        // choose the assignment form from the token after the ID
         match s.current_token() {
             Token::ASSIGN => Ok(Box::new(Assign::parse_expr(id, s)?)),
             Token::LSQUARE => Ok(Box::new(Assign::parse_subscript(id, s)?)),
@@ -133,6 +140,7 @@ impl Assign {
     fn validate_id(id: String, id_type: Option<VarType>, vars: &VarStack, assignment_type: String) -> Result<(), String> {
         let mut var: Option<&ScopedVar> = None;
 
+        // search from the innermost scope so shadowed variables work
         for map in vars.iter().rev() {
             if let Some(found_var) = map.get(&id) {
                 var = Some(found_var);
@@ -140,10 +148,12 @@ impl Assign {
             }
         }
 
+        // the ID must be declared in a visible scope
         let Some(scoped_var) = var else {
             return Err(format!("No such variable '{}' used in assignment", id));
         };
 
+        // only check the type if the caller requested one
         if let Some(id_type_enum) = id_type && scoped_var.var_type != id_type_enum {
             return Err(format!("{} assignment using variable '{}' not valid for that variable type", assignment_type, id));
         };
@@ -151,6 +161,7 @@ impl Assign {
         Ok(())
     }
 
+    // check the destination type and any variables used on the right
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Assign::Expr(id, expr) => {
@@ -166,6 +177,7 @@ impl Assign {
                 expr.validate(vars)
             }
             Assign::Colon(id1, id2) => {
+                // both IDs must be objects for colon assignment
                 Assign::validate_id(id1.to_string(), Some(VarType::Object), vars, "Colon type".to_string())?;
                 Assign::validate_id(id2.to_string(), Some(VarType::Object), vars, "Colon type".to_string())
             }
@@ -175,6 +187,7 @@ impl Assign {
 
 impl PrettyPrint for Assign {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
+        // indent once before printing the assignment
         write_indent(f, level)?;
 
         match self {
@@ -188,6 +201,7 @@ impl PrettyPrint for Assign {
 
 impl fmt::Display for Assign {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // standalone assignments start without indentation
         self.fmt_indented(f, 0)
     }
 }

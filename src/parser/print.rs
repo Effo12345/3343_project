@@ -21,6 +21,7 @@ impl Print {
         }
         s.next_token();
 
+        // print accepts a full expression inside the parentheses
         let expr = Expr::new(s)?;
 
         if s.current_token() != Token::RPAREN {
@@ -28,6 +29,7 @@ impl Print {
         }
         s.next_token();
 
+        // consume the final semicolon before parsing the next statement
         if s.current_token() != Token::SEMICOLON {
             return Err(format!("Missing ; in print statement"));
         }
@@ -37,10 +39,12 @@ impl Print {
     }
 
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        // check any variables used inside the expression
         self.expr.validate(vars)
     }
 }
 
+// print the expression using its own Display implementation
 impl PrettyPrint for Print {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         write_indent(f, level)?;

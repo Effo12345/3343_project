@@ -14,6 +14,7 @@ impl DeclSeq {
         // parse a decl to start, then decide if we need the seq later
         let decl = Decl::new(s)?;
         Ok(Box::new(
+            // global declarations continue until the procedure body starts
             if s.current_token() != Token::BEGIN {
                 DeclSeq::Seq(decl, DeclSeq::new(s)?)
             }
@@ -23,6 +24,7 @@ impl DeclSeq {
         ))
     }
 
+    // add declarations to the scope in the same order they appeared
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
            DeclSeq::Decl(decl) => decl.validate(vars)?,
@@ -36,6 +38,7 @@ impl DeclSeq {
     }
 }
 
+// declarations in the same sequence share an indentation level
 impl PrettyPrint for DeclSeq {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         match self {

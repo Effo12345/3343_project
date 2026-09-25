@@ -11,6 +11,7 @@ pub enum Decl {
 
 impl Decl {
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
+        // choose the declaration type from its starting keyword
         match s.current_token() {
             Token::INTEGER => Ok(Box::new(Decl::DeclInteger(DeclInteger::new(s)?))),
             Token::OBJECT => Ok(Box::new(Decl::DeclObj(DeclObj::new(s)?))),
@@ -18,6 +19,7 @@ impl Decl {
         }
     }
 
+    // let the declaration add its variable to the current scope
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Decl::DeclInteger(decl_int) => decl_int.validate(vars)?,
@@ -28,6 +30,7 @@ impl Decl {
     }
 }
 
+// pass the current indentation through to the declaration
 impl PrettyPrint for Decl {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         match self {

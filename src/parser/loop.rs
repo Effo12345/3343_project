@@ -25,6 +25,7 @@ impl Loop {
         }
         s.next_token();
         
+        // the first part of the header assigns to an existing variable
         let Token::ID(assignment_id) = s.current_token() else {
             return Err(format!("Expected an identifier in for loop assignment, got {:?}", s.current_token()));
         };
@@ -42,6 +43,7 @@ impl Loop {
         }
         s.next_token();
 
+        // the middle part is the loop condition
         let cond = Cond::new(s)?;
 
         if s.current_token() != Token::SEMICOLON {
@@ -49,6 +51,7 @@ impl Loop {
         }
         s.next_token();
 
+        // the last part is just an expression, not another assignment
         let increment = Expr::new(s)?;
 
         if s.current_token() != Token::RPAREN {
@@ -61,6 +64,7 @@ impl Loop {
         }
         s.next_token();
 
+        // parse the body after do, then consume its closing end
         let statements = StmtSeq::new(s)?;
 
         if s.current_token() != Token::END {
@@ -74,6 +78,7 @@ impl Loop {
     fn validate_id(id: String, vars: &VarStack) -> Result<(), String> {
         let mut var: Option<&ScopedVar> = None;
 
+        // search from the innermost scope so shadowed names resolve correctly
         for map in vars.iter().rev() {
             if let Some(found_var) = map.get(&id) {
                 var = Some(found_var);
@@ -81,6 +86,7 @@ impl Loop {
             }
         }
 
+        // the loop variable has to be declared before the loop
         let Some(scoped_var) = var else {
             return Err(format!("No such variable '{}' used in for loop assignment", id));
         };
@@ -89,6 +95,7 @@ impl Loop {
     }
 
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        // validate the header before introducing the body scope
         Loop::validate_id(self.assignment_id.to_string(), vars)?;
 
         self.assignment_expr.validate(vars)?;
@@ -104,6 +111,7 @@ impl Loop {
     }
 }
 
+// keep the header on one line and indent the body underneath it
 impl PrettyPrint for Loop {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         write_indent(f, level)?;

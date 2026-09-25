@@ -21,6 +21,7 @@ impl Read {
         }
         s.next_token();
 
+        // read takes a single variable name inside the parentheses
         let Token::ID(id) = s.current_token() else {
             return Err(format!("Expected ID in read statement, got {:?}", s.current_token()));
         };
@@ -31,6 +32,7 @@ impl Read {
         }
         s.next_token();
 
+        // consume the final semicolon before parsing the next statement
         if s.current_token() != Token::SEMICOLON {
             return Err(format!("Missing ; in read statement"));
         }
@@ -42,6 +44,7 @@ impl Read {
     fn validate_id(id: String, vars: &VarStack) -> Result<(), String> {
         let mut var: Option<&ScopedVar> = None;
 
+        // search from the innermost scope so shadowed names resolve correctly
         for map in vars.iter().rev() {
             if let Some(found_var) = map.get(&id) {
                 var = Some(found_var);
@@ -49,6 +52,7 @@ impl Read {
             }
         }
 
+        // make sure the variable exists before it can be read into
         let Some(scoped_var) = var else {
             return Err(format!("No such variable '{}' used in read statement", id));
         };
@@ -61,6 +65,7 @@ impl Read {
     }
 }
 
+// print the read statement on its own line
 impl PrettyPrint for Read {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         write_indent(f, level)?;

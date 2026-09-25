@@ -18,6 +18,7 @@ impl If {
         }
         s.next_token();
 
+        // parse the condition before looking for then
         let cond = Cond::new(s)?;
 
         if s.current_token() != Token::THEN {
@@ -25,6 +26,7 @@ impl If {
         }
         s.next_token();
 
+        // the true branch stops at else or end
         let stmt_seq = StmtSeq::new(s)?;
 
         let mut else_seq: Option<Box<StmtSeq>> = None;
@@ -34,6 +36,7 @@ impl If {
             else_seq = Some(StmtSeq::new(s)?);
         }
 
+        // both forms use a single end to close the if
         if s.current_token() != Token::END {
             return Err(format!("Missing 'end' in if statement, got {:?}", s.current_token()));
         }
@@ -79,6 +82,7 @@ impl If {
     }
 }
 
+// indent each branch, keeping if, else, and end at the same level
 impl PrettyPrint for If {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         match self {

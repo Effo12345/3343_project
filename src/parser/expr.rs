@@ -4,6 +4,7 @@ use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Term;
 
+// keep the remaining expression on the right, as in the grammar
 pub enum Expr {
     Term(Box<Term>),
     Add(Box<Term>, Box<Expr>),
@@ -30,6 +31,7 @@ impl Expr {
         ))
     }
 
+    // check each term and the rest of the expression
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Expr::Term(term) => term.validate(vars),
@@ -45,6 +47,7 @@ impl Expr {
     }
 }
 
+// print operators with spaces between the terms
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

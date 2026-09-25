@@ -27,6 +27,7 @@ impl Cmpr {
         }
     }
 
+    // both sides need to be valid expressions
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Cmpr::Equality(expr1, expr2) | Cmpr::LT(expr1, expr2) => {
@@ -37,6 +38,7 @@ impl Cmpr {
     }
 }
 
+// print the comparison between the two expressions
 impl fmt::Display for Cmpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

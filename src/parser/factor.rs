@@ -4,6 +4,7 @@ use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Tok
 
 use super::Expr;
 
+// a factor is a value, an object access, or a parenthesized expression
 pub enum Factor {
     Id(String),
     IdSubscript(String, String), // id, accessor
@@ -16,6 +17,7 @@ impl Factor {
         // ( checked by new, consume it
         s.next_token();
 
+        // parse the expression inside the parentheses
         let expr = Expr::new(s)?;
 
         if s.current_token() != Token::RPAREN {
@@ -42,6 +44,7 @@ impl Factor {
         // [ already checked by parse_id, consume it
         s.next_token();
 
+        // object accessors must be strings
         let Token::STRING(accessor) = s.current_token() else {
             return Err(format!("Expected string in subscripting factor, got {:?}", s.current_token()));
         };
@@ -55,6 +58,7 @@ impl Factor {
         Ok(Factor::IdSubscript(id, accessor))
     }
 
+    // choose the factor type from the first token
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
         match s.current_token() {
             Token::CONST(constant) => {
@@ -70,6 +74,7 @@ impl Factor {
     fn validate_id(id: String, id_type: Option<VarType>, vars: &VarStack, factor_type: String) -> Result<(), String> {
         let mut var: Option<&ScopedVar> = None;
 
+        // search from the innermost scope so shadowed variables work
         for map in vars.iter().rev() {
             if let Some(found_var) = map.get(&id) {
                 var = Some(found_var);
@@ -77,10 +82,12 @@ impl Factor {
             }
         }
 
+        // the ID must be declared in a visible scope
         let Some(scoped_var) = var else {
             return Err(format!("Undeclared variable '{}' used in factor", id));
         };
 
+        // only check the type if the caller requested one
         if let Some(id_type_enum) = id_type && scoped_var.var_type != id_type_enum {
             return Err(format!("{} factor using variable '{}' not valid for factor type", factor_type, id));
         };
@@ -88,6 +95,7 @@ impl Factor {
         Ok(())
     }
 
+    // plain IDs allow either type, but subscripting needs an object
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Factor::Id(id) => Factor::validate_id(id.to_string(), None, vars, "".to_string()),
@@ -99,6 +107,7 @@ impl Factor {
     }
 }
 
+// put the accessor quotes and expression parentheses back
 impl fmt::Display for Factor {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

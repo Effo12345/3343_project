@@ -15,6 +15,7 @@ pub enum Stmt {
 
 impl Stmt {
     pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
+        // the first token tells us which statement parser to use
         match s.current_token() {
             Token::ID(_) => Ok(Box::new(Stmt::Assign(Assign::new(s)?))),
             Token::IF => Ok(Box::new(Stmt::If(If::new(s)?))),
@@ -26,6 +27,7 @@ impl Stmt {
         }
     }
 
+    // each statement handles its own variable and scope checks
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         match self {
             Stmt::Assign(assign) => assign.validate(vars),
@@ -38,6 +40,7 @@ impl Stmt {
     }
 }
 
+// let the statement print itself using the current indentation
 impl PrettyPrint for Stmt {
     fn fmt_indented(&self, f: &mut fmt::Formatter<'_>, level: usize) -> fmt::Result {
         match self {

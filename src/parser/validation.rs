@@ -11,4 +11,6 @@ pub struct ScopedVar {
     pub(crate) var_type: VarType
 }
 
+// one map per scope, with the innermost scope at the end
+// searching backwards lets inner declarations shadow outer ones
 pub type VarStack = Vec<HashMap<String, ScopedVar>>;
