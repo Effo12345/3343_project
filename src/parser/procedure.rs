@@ -38,6 +38,15 @@ impl Procedure {
 
         let stmt_seq = StmtSeq::new(s)?;
 
+        if s.current_token() != Token::END {
+            return Err(format!("Expected 'end' of procedure but got {:?}", s.current_token()));
+        }
+        s.next_token();
+
+        if s.current_token() != Token::EOS {
+            return Err(format!("Expected end of file following procedure end but got {:?}", s.current_token()));
+        }
+
         Ok(Box::new(
             match decl_seq {
                 Some(decls) => Procedure::WithDecl(id_str, decls, stmt_seq),
