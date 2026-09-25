@@ -45,23 +45,4 @@ fn main() {
         // Display handles the indentation for the whole tree
         println!("{proc}");
     }
-
-    // while scanner.current_token() != Token::EOS && !matches!(scanner.current_token(), Token::ERROR { .. }) {
-    //     // this is technically bad since debug printing isn't stable
-    //     // but it'll do since it's really only needed for this assignment
-    //     // and doing it correctly with fmt would be a pain
-    //     let token_str = format!("{:?}", scanner.current_token());
-
-    //     // this is also comically inefficient but ¯\_(ツ)_/¯
-    //     let token_str: String = token_str.replacen('(', "[", 1).chars().rev().collect();
-    //     let token_str: String = token_str.replacen(')', "]", 1).chars().rev().collect();
-    //     let token_str = token_str.replace('"', "");
-    //     println!("{}", token_str);
-
-    //     scanner.next_token();
-    // }
-
-    // if let Token::ERROR(e) = scanner.current_token() {
-    //     println!("ERROR: {e}");
-    // }
 }
