@@ -88,7 +88,7 @@ impl Loop {
 
         // the loop variable has to be declared before the loop
         let Some(scoped_var) = var else {
-            return Err(format!("No such variable '{}' used in for loop assignment", id));
+            return Err(format!("Undeclared variable '{}' used in for loop assignment", id));
         };
 
         Ok(())

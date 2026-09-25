@@ -150,7 +150,7 @@ impl Assign {
 
         // the ID must be declared in a visible scope
         let Some(scoped_var) = var else {
-            return Err(format!("No such variable '{}' used in assignment", id));
+            return Err(format!("Undeclared variable '{}' used in assignment", id));
         };
 
         // only check the type if the caller requested one

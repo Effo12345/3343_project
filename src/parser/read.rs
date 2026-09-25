@@ -54,7 +54,7 @@ impl Read {
 
         // make sure the variable exists before it can be read into
         let Some(scoped_var) = var else {
-            return Err(format!("No such variable '{}' used in read statement", id));
+            return Err(format!("Undeclared variable '{}' used in read statement", id));
         };
 
         Ok(())
