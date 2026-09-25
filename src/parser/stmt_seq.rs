@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{PrettyPrint, Stmt};
 
@@ -20,6 +20,16 @@ impl StmtSeq {
                 _ => StmtSeq::Seq(stmt, StmtSeq::new(s)?)
             }
         ))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            StmtSeq::Stmt(stmt) => stmt.validate(vars),
+            StmtSeq::Seq(stmt, stmt_seq) => {
+                stmt.validate(vars)?;
+                stmt_seq.validate(vars)
+            }
+        }
     }
 }
 

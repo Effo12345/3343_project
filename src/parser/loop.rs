@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Cond, Expr, PrettyPrint, StmtSeq};
 
@@ -69,6 +69,38 @@ impl Loop {
         s.next_token();
 
         Ok(Box::new(Loop{assignment_id, assignment_expr, cond, increment, statements}))
+    }
+
+    fn validate_id(id: String, vars: &VarStack) -> Result<(), String> {
+        let mut var: Option<&ScopedVar> = None;
+
+        for map in vars.iter().rev() {
+            if let Some(found_var) = map.get(&id) {
+                var = Some(found_var);
+                break;
+            }
+        }
+
+        let Some(scoped_var) = var else {
+            return Err(format!("No such variable '{}' used in for loop assignment", id));
+        };
+
+        Ok(())
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        Loop::validate_id(self.assignment_id.to_string(), vars)?;
+
+        self.assignment_expr.validate(vars)?;
+        self.cond.validate(vars)?;
+        self.increment.validate(vars)?;
+        
+        // validate using separate loop scope
+        vars.push(HashMap::new());
+        self.statements.validate(vars)?;
+        vars.pop();
+
+        Ok(())
     }
 }
 

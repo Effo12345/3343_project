@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{write_indent, Cond, PrettyPrint, StmtSeq};
 
@@ -45,6 +45,37 @@ impl If {
                 None => If::If(cond, stmt_seq)
             }
         ))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            If::If(cond, stmt_seq) => {
+                cond.validate(vars)?;
+
+                // push new scope
+                vars.push(HashMap::new());
+
+                stmt_seq.validate(vars)?;
+
+                // pop if block scope
+                vars.pop();
+            }
+            If::IfElse(cond, if_seq, else_seq) => {
+                cond.validate(vars)?;
+
+                // eval with if scope
+                vars.push(HashMap::new());
+                if_seq.validate(vars)?;
+                vars.pop();
+
+                // eval with else scope
+                vars.push(HashMap::new());
+                else_seq.validate(vars)?;
+                vars.pop();
+            }
+        };
+
+        Ok(())
     }
 }
 

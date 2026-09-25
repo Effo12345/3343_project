@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{write_indent, DeclSeq, PrettyPrint, StmtSeq};
 
@@ -54,6 +54,27 @@ impl Procedure {
             }
         ))
 
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Procedure::WithDecl(_, decl_seq, stmt_seq) => {
+                // push global scope onto stack
+                vars.push(HashMap::new());
+                decl_seq.validate(vars)?;
+
+                // push procedure scope
+                vars.push(HashMap::new());
+                stmt_seq.validate(vars)?
+            },
+            Procedure::NoDecl(_, stmt_seq) =>  {
+                // push procedure scope
+                vars.push(HashMap::new());
+                stmt_seq.validate(vars)?;
+            }
+        };
+
+        Ok(())
     }
 }
 

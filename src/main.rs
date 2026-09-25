@@ -2,10 +2,12 @@ mod token;
 mod scanner;
 mod parser;
 
-use std::env;
+use std::{env, process::exit};
 
 use scanner::Scanner;
 use parser::Procedure;
+
+use crate::parser::VarStack;
 
 fn main() {
     let Some(filename) = env::args().nth(1) else {
@@ -21,9 +23,22 @@ fn main() {
         }
     };
 
+    let proc: Procedure;
     match Procedure::new(&mut scanner) {
-        Ok(procedure) => print!("{procedure}"),
-        Err(e) => println!("ERROR: {e}")
+        Ok(procedure) => proc = *procedure,
+        Err(e) => {
+            println!("ERROR: {e}");
+            exit(-1);
+        }
+    };
+    
+    let mut vars: VarStack = Vec::new();
+
+    if let Err(e) = proc.validate(&mut vars) {
+        println!("ERROR: {e}");
+    }
+    else {
+        println!("{proc}");
     }
 
     // while scanner.current_token() != Token::EOS && !matches!(scanner.current_token(), Token::ERROR { .. }) {

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Expr;
 
@@ -24,6 +24,15 @@ impl Cmpr {
                 Ok(Box::new(Cmpr::LT(expr1, Expr::new(s)?)))
             },
             _ => Err(format!("Unexpected token at start of comparison: {:?}", s.current_token()))
+        }
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Cmpr::Equality(expr1, expr2) | Cmpr::LT(expr1, expr2) => {
+                expr1.validate(vars)?;
+                expr2.validate(vars)
+            }
         }
     }
 }

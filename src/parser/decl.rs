@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{DeclInteger, DeclObj, PrettyPrint};
 
@@ -16,6 +16,15 @@ impl Decl {
             Token::OBJECT => Ok(Box::new(Decl::DeclObj(DeclObj::new(s)?))),
             _ => Err(format!("Expected 'integer' or 'object' to start declaration, got {:?}", s.current_token()))
         }
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Decl::DeclInteger(decl_int) => decl_int.validate(vars)?,
+            Decl::DeclObj(decl_obj) => decl_obj.validate(vars)?
+        };
+
+        Ok(())
     }
 }
 

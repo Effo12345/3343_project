@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Cmpr;
 
@@ -57,6 +57,17 @@ impl Cond {
                 _ => Cond::parse_bare_and_or(s)?
             }
         ))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Cond::Cmpr(cmpr) => cmpr.validate(vars),
+            Cond::Not(cond) | Cond::Bracket(cond) => cond.validate(vars),
+            Cond::Or(cmpr, cond) | Cond::And(cmpr, cond) => {
+                cmpr.validate(vars)?;
+                cond.validate(vars)
+            }
+        }
     }
 }
 

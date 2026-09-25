@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Factor;
 
@@ -28,6 +28,20 @@ impl Term {
                 _ => Term::Fac(factor)
             }
         ))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Term::Fac(fac) => fac.validate(vars),
+            Term::Mult(fac, term) => {
+                fac.validate(vars)?;
+                term.validate(vars)
+            }
+            Term::Div(fac, term) => {
+                fac.validate(vars)?;
+                term.validate(vars)
+            }
+        }
     }
 }
 

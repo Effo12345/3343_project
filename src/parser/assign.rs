@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Expr, PrettyPrint};
 
@@ -127,6 +127,48 @@ impl Assign {
             Token::LSQUARE => Ok(Box::new(Assign::parse_subscript(id, s)?)),
             Token::COLON => Ok(Box::new(Assign::parse_colon(id, s)?)),
             _ => Err(format!("Unexpected token at the beginning of assignment: {:?}", s.current_token()))
+        }
+    }
+
+    fn validate_id(id: String, id_type: Option<VarType>, vars: &VarStack, assignment_type: String) -> Result<(), String> {
+        let mut var: Option<&ScopedVar> = None;
+
+        for map in vars.iter().rev() {
+            if let Some(found_var) = map.get(&id) {
+                var = Some(found_var);
+                break;
+            }
+        }
+
+        let Some(scoped_var) = var else {
+            return Err(format!("No such variable '{}' used in assignment", id));
+        };
+
+        if let Some(id_type_enum) = id_type && scoped_var.var_type != id_type_enum {
+            return Err(format!("{} assignment using variable '{}' not valid for that variable type", assignment_type, id));
+        };
+
+        Ok(())
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Assign::Expr(id, expr) => {
+                Assign::validate_id(id.to_string(), None, vars, String::new())?;
+                expr.validate(vars)
+            }
+            Assign::Subscript(id, _, expr) => {
+                Assign::validate_id(id.to_string(), Some(VarType::Object), vars, "Subscripting".to_string())?;
+                expr.validate(vars)
+            }
+            Assign::Object(id, _, expr) => {
+                Assign::validate_id(id.to_string(), Some(VarType::Object), vars, "Object type".to_string())?;
+                expr.validate(vars)
+            }
+            Assign::Colon(id1, id2) => {
+                Assign::validate_id(id1.to_string(), Some(VarType::Object), vars, "Colon type".to_string())?;
+                Assign::validate_id(id2.to_string(), Some(VarType::Object), vars, "Colon type".to_string())
+            }
         }
     }
 }

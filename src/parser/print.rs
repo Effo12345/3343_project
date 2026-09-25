@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{write_indent, Expr, PrettyPrint};
 
@@ -34,6 +34,10 @@ impl Print {
         s.next_token();
 
         Ok(Box::new(Print{expr}))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        self.expr.validate(vars)
     }
 }
 

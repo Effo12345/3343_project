@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{Assign, Decl, If, Loop, PrettyPrint, Print, Read};
 
@@ -23,6 +23,17 @@ impl Stmt {
             Token::READ => Ok(Box::new(Stmt::Read(Read::new(s)?))),
             Token::INTEGER | Token::OBJECT => Ok(Box::new(Stmt::Decl(Decl::new(s)?))),
             _ => Err(format!("Unexpected token at the beginning of statement: {:?}", s.current_token()))
+        }
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Stmt::Assign(assign) => assign.validate(vars),
+            Stmt::If(boxed_if) => boxed_if.validate(vars),
+            Stmt::Loop(boxed_loop) => boxed_loop.validate(vars),
+            Stmt::Print(print) => print.validate(vars),
+            Stmt::Read(read) => read.validate(vars),
+            Stmt::Decl(decl) => decl.validate(vars)
         }
     }
 }

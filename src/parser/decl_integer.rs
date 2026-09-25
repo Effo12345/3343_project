@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -27,6 +27,17 @@ impl DeclInteger {
         s.next_token();
 
         Ok(Box::new(DeclInteger{id}))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        let Some(curr_scope) = vars.last_mut() else {
+            return Err("Variable declared outside any scope".to_string());
+        };
+
+        match curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Integer}) {
+            Some(_) => Err(format!("Variable {} declared multiple times in the same scope", self.id)),
+            None => Ok(())
+        }
     }
 }
 

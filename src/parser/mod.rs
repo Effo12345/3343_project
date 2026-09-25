@@ -18,6 +18,8 @@ mod stmt;
 mod stmt_seq;
 mod term;
 
+mod validation;
+
 // Re-export the AST types through `parser`.
 pub use assign::Assign;
 pub use cmpr::Cmpr;
@@ -36,6 +38,8 @@ pub use read::Read;
 pub use stmt::Stmt;
 pub use stmt_seq::StmtSeq;
 pub use term::Term;
+
+pub use validation::{VarType, VarStack, ScopedVar};
 
 const INDENT_WIDTH: usize = 4;
 

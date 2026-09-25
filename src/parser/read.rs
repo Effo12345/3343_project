@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -37,6 +37,27 @@ impl Read {
         s.next_token();
 
         Ok(Box::new(Read{id}))
+    }
+
+    fn validate_id(id: String, vars: &VarStack) -> Result<(), String> {
+        let mut var: Option<&ScopedVar> = None;
+
+        for map in vars.iter().rev() {
+            if let Some(found_var) = map.get(&id) {
+                var = Some(found_var);
+                break;
+            }
+        }
+
+        let Some(scoped_var) = var else {
+            return Err(format!("No such variable '{}' used in read statement", id));
+        };
+
+        Ok(())
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        Read::validate_id(self.id.to_string(), vars)
     }
 }
 

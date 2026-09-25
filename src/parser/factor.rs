@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Token};
 
 use super::Expr;
 
@@ -64,6 +64,37 @@ impl Factor {
             Token::LPAREN => Ok(Box::new(Factor::parse_parenthetical(s)?)),
             Token::ID(id) => Ok(Box::new(Factor::parse_id(id, s)?)),
             _ => Err(format!("Unexpected token at start of factor: {:?}", s.current_token()))
+        }
+    }
+
+    fn validate_id(id: String, id_type: Option<VarType>, vars: &VarStack, factor_type: String) -> Result<(), String> {
+        let mut var: Option<&ScopedVar> = None;
+
+        for map in vars.iter().rev() {
+            if let Some(found_var) = map.get(&id) {
+                var = Some(found_var);
+                break;
+            }
+        }
+
+        let Some(scoped_var) = var else {
+            return Err(format!("Undeclared variable '{}' used in factor", id));
+        };
+
+        if let Some(id_type_enum) = id_type && scoped_var.var_type != id_type_enum {
+            return Err(format!("{} factor using variable '{}' not valid for factor type", factor_type, id));
+        };
+
+        Ok(())
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Factor::Id(id) => Factor::validate_id(id.to_string(), None, vars, "".to_string()),
+            Factor::IdSubscript(id, _) =>
+                Factor::validate_id(id.to_string(), Some(VarType::Object), vars, "Subscripting".to_string()),
+            Factor::Const(_) => Ok(()),
+            Factor::SubExpr(expr) => expr.validate(vars)
         }
     }
 }

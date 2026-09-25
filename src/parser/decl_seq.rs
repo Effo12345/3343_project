@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::{Decl, PrettyPrint};
 
@@ -21,6 +21,18 @@ impl DeclSeq {
                 DeclSeq::Decl(decl)
             }
         ))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+           DeclSeq::Decl(decl) => decl.validate(vars)?,
+           DeclSeq::Seq(decl, decl_seq) => {
+                decl.validate(vars)?;
+                decl_seq.validate(vars)?
+           }
+        };
+
+        Ok(())
     }
 }
 

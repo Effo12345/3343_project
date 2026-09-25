@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
 use super::Term;
 
@@ -28,6 +28,20 @@ impl Expr {
                 _ => Expr::Term(term)
             }
         ))
+    }
+
+    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+        match self {
+            Expr::Term(term) => term.validate(vars),
+            Expr::Add(term, expr) => {
+                term.validate(vars)?;
+                expr.validate(vars)
+            }
+            Expr::Sub(term, expr) => {
+                term.validate(vars)?;
+                expr.validate(vars)
+            }
+        }
     }
 }
 
