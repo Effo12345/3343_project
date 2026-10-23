@@ -62,6 +62,7 @@ impl Read {
             Token::EOS => exit_with_msg("Attempted to read past end of data sequence"),
             _ => exit_with_msg("Unknown token read in data sequence")
         };
+        read_scanner.next_token();
 
         let var = stdout_expect(vars.resolve_var(&self.id), "Undeclared variable used somehow");
         var.var_type.set_int_or_default(&self.id, const_val as i32);
