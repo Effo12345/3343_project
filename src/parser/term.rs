@@ -50,15 +50,19 @@ impl Term {
         match self {
             Term::Fac(fac) => fac.execute(vars),
             Term::Mult(fac, term) => {
-                fac.execute(vars) * term.execute(vars)
+                // wrap on overflow
+                fac.execute(vars).wrapping_mul(term.execute(vars))
             }
             Term::Div(fac, term) => {
+                // evaluate fac first so error messages are thrown left to right
+                let fac_val = fac.execute(vars);
+
                 let term_val = term.execute(vars);
                 if term_val == 0 {
                     exit_with_msg("Division by zero");
                 }
 
-                fac.execute(vars) / term_val
+                fac_val.wrapping_div(term_val)
             }
         }
     }

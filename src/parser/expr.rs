@@ -50,10 +50,11 @@ impl Expr {
         match self {
             Expr::Term(term) => term.execute(vars),
             Expr::Add(term, expr) => {
-                term.execute(vars) + expr.execute(vars)
+                // wrap on overflow
+                term.execute(vars).wrapping_add(expr.execute(vars))
             }
             Expr::Sub(term, expr) => {
-                term.execute(vars) - expr.execute(vars)
+                term.execute(vars).wrapping_sub(expr.execute(vars))
             }
         }
     }

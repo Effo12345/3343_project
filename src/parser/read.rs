@@ -60,6 +60,7 @@ impl Read {
         let const_val = match read_scanner.current_token() {
             Token::CONST(val) => val,
             Token::EOS => exit_with_msg("Attempted to read past end of data sequence"),
+            Token::ERROR(msg) => exit_with_msg(&format!("Data scanner: {}", &msg)),
             _ => exit_with_msg("Unknown token read in data sequence")
         };
         read_scanner.next_token();

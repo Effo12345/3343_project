@@ -139,7 +139,7 @@ impl Scanner {
             self.reader.next(); // consume starting '
             match self.read_buf_until(self.string_continue_read, self.string_process_output, true) {
                 Token::EOS => 
-                    self.curr_token = Token::ERROR(String::from("Unclosed string (EOS reached before closing ')")),
+                    self.curr_token = Token::ERROR(String::from("Unclosed string (EOS reached before closing)")),
                 other => self.curr_token = other
             }
 
