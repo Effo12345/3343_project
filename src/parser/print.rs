@@ -42,6 +42,10 @@ impl Print {
         // check any variables used inside the expression
         self.expr.validate(vars)
     }
+
+    pub fn execute(&self, vars: &mut VarStack) {
+        println!("{}", self.expr.execute(vars));
+    }
 }
 
 // print the expression using its own Display implementation

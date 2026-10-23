@@ -36,6 +36,13 @@ impl Cmpr {
             }
         }
     }
+
+    pub fn execute(&self, vars: &mut VarStack) -> bool {
+        match self {
+            Cmpr::Equality(expr1, expr2) => expr1.execute(vars) == expr2.execute(vars),
+            Cmpr::LT(expr1, expr2) => expr1.execute(vars) < expr2.execute(vars)
+        }
+    }
 }
 
 // print the comparison between the two expressions

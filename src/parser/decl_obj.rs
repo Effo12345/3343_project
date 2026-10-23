@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType, variables::ObjectType, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -38,11 +38,19 @@ impl DeclObj {
         };
 
         // insert returns the old value if this name was already declared here
-        match curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Object}) {
+        match curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::empty_object()}) {
             Some(_) => Err(format!("Variable {} declared multiple times in the same scope", self.id)),
             None => Ok(())
         }
     }
+
+     pub fn execute(&self, vars: &mut VarStack) {
+        // this runtime error should never happen due to syntax checks
+        let curr_scope = stdout_expect(vars.last_mut(), "Bad variable declaration");
+
+        // objects get initialized by the "new" keyword, so don't bother now
+        curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::empty_object()});
+     }
 }
 
 // print one declaration at the requested indentation

@@ -1,4 +1,5 @@
 use crate::token::Token;
+use crate::parser::utils::stdout_expect;
 
 use std::fs::File;
 use std::io::{BufReader, Read, Bytes};
@@ -118,7 +119,7 @@ impl Scanner {
         // peek the next character to match on 
         // we know it exists since !EOS guarantee by above
         let curr_char: char;
-        match self.reader.peek().expect("This should never happen") {
+        match stdout_expect(self.reader.peek(), "This should never happen") {
             Ok(byte) => curr_char = *byte as char, // this assumes STRICTLY ASCII encoding
             Err(e) => {
                 self.curr_token = Token::ERROR(e.to_string());

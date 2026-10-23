@@ -5,7 +5,7 @@
 ```
 .
 ├── src/
-│   ├── main.rs             # Handle args, parsing, validation, and printing
+│   ├── main.rs             # Handle args, parsing, variables, and printing
 │   ├── scanner.rs          # Scanner struct and implementation
 │   ├── token.rs            # Token enum w/ internal data
 │   └── parser/
@@ -27,7 +27,7 @@
 │       ├── expr.rs         # Addition and subtraction
 │       ├── term.rs         # Multiplication and division
 │       ├── factor.rs       # IDs, constants, object access, and parentheses
-│       └── validation.rs   # Variable types and scope stack definitions
+│       └── variables.rs   # Variable types and scope stack definitions
 ├── Cargo.lock              # no touchy :)
 ├── Cargo.toml              # Package settings and dependencies (none for now)
 ├── README.md               # Project overview and usage notes

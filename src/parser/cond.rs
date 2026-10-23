@@ -74,6 +74,16 @@ impl Cond {
             }
         }
     }
+
+    pub fn execute(&self, vars: &mut VarStack) -> bool {
+        match self {
+            Cond::Cmpr(cmpr) => cmpr.execute(vars),
+            Cond::Not(cond) => !cond.execute(vars),
+            Cond::Bracket(cond) => cond.execute(vars),
+            Cond::Or(cmpr, cond) => cmpr.execute(vars) || cond.execute(vars),
+            Cond::And(cmpr, cond) => cmpr.execute(vars) && cond.execute(vars)
+        }
+    }
 }
 
 // put the condition operators and brackets back

@@ -81,6 +81,25 @@ impl Procedure {
 
         Ok(())
     }
+
+    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+        match self {
+            Procedure::WithDecl(_, decl_seq, stmt_seq) => {
+                // push global scope onto stack
+                vars.push(HashMap::new());
+                decl_seq.execute(vars);
+
+                // push procedure scope
+                vars.push(HashMap::new());
+                stmt_seq.execute(vars, read_scanner)
+            },
+            Procedure::NoDecl(_, stmt_seq) =>  {
+                // push procedure scope
+                vars.push(HashMap::new());
+                stmt_seq.execute(vars, read_scanner);
+            }
+        };
+    }
 }
 
 // indent declarations and statements, keeping the procedure markers aligned

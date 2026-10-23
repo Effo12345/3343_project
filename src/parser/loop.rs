@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use crate::{parser::{ScopedVar, VarStack}, scanner::Scanner, token::Token};
+use crate::{parser::{VarStack, utils::stdout_expect, variables::VarStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Cond, Expr, PrettyPrint, StmtSeq};
 
@@ -75,19 +75,11 @@ impl Loop {
         Ok(Box::new(Loop{assignment_id, assignment_expr, cond, increment, statements}))
     }
 
-    fn validate_id(id: String, vars: &VarStack) -> Result<(), String> {
-        let mut var: Option<&ScopedVar> = None;
-
-        // search from the innermost scope so shadowed names resolve correctly
-        for map in vars.iter().rev() {
-            if let Some(found_var) = map.get(&id) {
-                var = Some(found_var);
-                break;
-            }
-        }
+    fn validate_id(id: String, vars: &mut VarStack) -> Result<(), String> {
+        let var = vars.resolve_var(&id);
 
         // the loop variable has to be declared before the loop
-        let Some(scoped_var) = var else {
+        let Some(_) = var else {
             return Err(format!("Undeclared variable '{}' used in for loop assignment", id));
         };
 
@@ -108,6 +100,27 @@ impl Loop {
         vars.pop();
 
         Ok(())
+    }
+    
+    // look the index up fresh each time since vars changes between writes
+    fn set_index(&self, vars: &mut VarStack, value: i32) {
+        let idx = stdout_expect(vars.resolve_var(&self.assignment_id), "Undeclared variable used somehow");
+        idx.var_type.set_int_or_default(&self.assignment_id, value);
+    }
+
+    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+        let init = self.assignment_expr.execute(vars);
+        self.set_index(vars, init);
+
+        while self.cond.execute(vars) {
+            // each loop run gets its own scope
+            vars.push(HashMap::new());
+            self.statements.execute(vars, read_scanner);
+            vars.pop();
+
+            let next = self.increment.execute(vars);
+            self.set_index(vars, next);
+        }
     }
 }
 

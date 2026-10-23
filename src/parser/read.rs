@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack}, scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, utils::{exit_with_msg, stdout_expect}, variables::VarStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -41,16 +41,8 @@ impl Read {
         Ok(Box::new(Read{id}))
     }
 
-    fn validate_id(id: String, vars: &VarStack) -> Result<(), String> {
-        let mut var: Option<&ScopedVar> = None;
-
-        // search from the innermost scope so shadowed names resolve correctly
-        for map in vars.iter().rev() {
-            if let Some(found_var) = map.get(&id) {
-                var = Some(found_var);
-                break;
-            }
-        }
+    fn validate_id(id: String, vars: &mut VarStack) -> Result<(), String> {
+        let var = vars.resolve_var(&id);
 
         // make sure the variable exists before it can be read into
         let Some(scoped_var) = var else {
@@ -62,6 +54,17 @@ impl Read {
 
     pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
         Read::validate_id(self.id.to_string(), vars)
+    }
+
+    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+        let const_val = match read_scanner.current_token() {
+            Token::CONST(val) => val,
+            Token::EOS => exit_with_msg("Attempted to read past end of data sequence"),
+            _ => exit_with_msg("Unknown token read in data sequence")
+        };
+
+        let var = stdout_expect(vars.resolve_var(&self.id), "Undeclared variable used somehow");
+        var.var_type.set_int_or_default(&self.id, const_val as i32);
     }
 }
 

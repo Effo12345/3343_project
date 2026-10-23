@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::{VarStack, utils::exit_with_msg}, scanner::Scanner, token::Token};
 
 use super::Factor;
 
@@ -42,6 +42,23 @@ impl Term {
             Term::Div(fac, term) => {
                 fac.validate(vars)?;
                 term.validate(vars)
+            }
+        }
+    }
+
+    pub fn execute(&self, vars: &mut VarStack) -> i32 {
+        match self {
+            Term::Fac(fac) => fac.execute(vars),
+            Term::Mult(fac, term) => {
+                fac.execute(vars) * term.execute(vars)
+            }
+            Term::Div(fac, term) => {
+                let term_val = term.execute(vars);
+                if term_val == 0 {
+                    exit_with_msg("Division by zero");
+                }
+
+                fac.execute(vars) / term_val
             }
         }
     }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -38,10 +38,17 @@ impl DeclInteger {
         };
 
         // insert returns the old value if this name was already declared here
-        match curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Integer}) {
+        match curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Integer(0)}) {
             Some(_) => Err(format!("Variable {} declared multiple times in the same scope", self.id)),
             None => Ok(())
         }
+    }
+
+    pub fn execute(&self, vars: &mut VarStack) {
+        // this runtime error should never happen due to syntax checks
+        let curr_scope = stdout_expect(vars.last_mut(), "Bad variable declaration");
+
+        curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Integer(0)});
     }
 }
 

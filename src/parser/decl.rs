@@ -28,6 +28,13 @@ impl Decl {
 
         Ok(())
     }
+
+    pub fn execute(&self, vars: &mut VarStack) {
+        match self {
+            Decl::DeclInteger(decl_int) => decl_int.execute(vars),
+            Decl::DeclObj(decl_obj) => decl_obj.execute(vars)
+        };
+    }
 }
 
 // pass the current indentation through to the declaration

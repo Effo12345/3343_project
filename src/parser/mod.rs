@@ -18,7 +18,8 @@ mod stmt;
 mod stmt_seq;
 mod term;
 
-mod validation;
+mod variables;
+pub(crate) mod utils;
 
 // Re-export the AST types through `parser`.
 pub use assign::Assign;
@@ -39,7 +40,7 @@ pub use stmt::Stmt;
 pub use stmt_seq::StmtSeq;
 pub use term::Term;
 
-pub use validation::{VarType, VarStack, ScopedVar};
+pub use variables::{VarType, VarStack, ScopedVar};
 
 const INDENT_WIDTH: usize = 4;
 

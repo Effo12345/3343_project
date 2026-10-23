@@ -45,6 +45,18 @@ impl Expr {
             }
         }
     }
+
+    pub fn execute(&self, vars: &mut VarStack) -> i32 {
+        match self {
+            Expr::Term(term) => term.execute(vars),
+            Expr::Add(term, expr) => {
+                term.execute(vars) + expr.execute(vars)
+            }
+            Expr::Sub(term, expr) => {
+                term.execute(vars) - expr.execute(vars)
+            }
+        }
+    }
 }
 
 // print operators with spaces between the terms

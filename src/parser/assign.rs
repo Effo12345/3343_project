@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{cell::RefCell, collections::HashMap, default, fmt, rc::Rc};
 
-use crate::{parser::{ScopedVar, VarStack, VarType}, scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Expr, PrettyPrint};
 
@@ -137,16 +137,8 @@ impl Assign {
         }
     }
 
-    fn validate_id(id: String, id_type: Option<VarType>, vars: &VarStack, assignment_type: String) -> Result<(), String> {
-        let mut var: Option<&ScopedVar> = None;
-
-        // search from the innermost scope so shadowed variables work
-        for map in vars.iter().rev() {
-            if let Some(found_var) = map.get(&id) {
-                var = Some(found_var);
-                break;
-            }
-        }
+    fn validate_id(id: String, id_type: Option<VarType>, vars: &mut VarStack, assignment_type: String) -> Result<(), String> {
+        let var = vars.resolve_var(&id);
 
         // the ID must be declared in a visible scope
         let Some(scoped_var) = var else {
@@ -169,17 +161,57 @@ impl Assign {
                 expr.validate(vars)
             }
             Assign::Subscript(id, _, expr) => {
-                Assign::validate_id(id.to_string(), Some(VarType::Object), vars, "Subscripting".to_string())?;
+                Assign::validate_id(id.to_string(), Some(VarType::empty_object()), vars, "Subscripting".to_string())?;
                 expr.validate(vars)
             }
             Assign::Object(id, _, expr) => {
-                Assign::validate_id(id.to_string(), Some(VarType::Object), vars, "Object type".to_string())?;
+                Assign::validate_id(id.to_string(), Some(VarType::empty_object()), vars, "Object type".to_string())?;
                 expr.validate(vars)
             }
             Assign::Colon(id1, id2) => {
                 // both IDs must be objects for colon assignment
-                Assign::validate_id(id1.to_string(), Some(VarType::Object), vars, "Colon type".to_string())?;
-                Assign::validate_id(id2.to_string(), Some(VarType::Object), vars, "Colon type".to_string())
+                Assign::validate_id(id1.to_string(), Some(VarType::empty_object()), vars, "Colon type".to_string())?;
+                Assign::validate_id(id2.to_string(), Some(VarType::empty_object()), vars, "Colon type".to_string())
+            }
+        }
+    }
+
+    pub fn execute(&self, vars: &mut VarStack) {
+        match self {
+            Assign::Expr(id, expr) => {
+                let expr_res = expr.execute(vars);
+                let var = stdout_expect(vars.resolve_var(id), "Undeclared variable used somehow");
+
+                var.var_type.set_int_or_default(id, expr_res);
+            }
+            Assign::Subscript(id, accessor, expr) => {
+                let expr_res = expr.execute(vars);
+                let var = stdout_expect(vars.resolve_var(id), "Undeclared variable used somehow");
+
+                // semantic checks guarantee the enum will be object type
+                var.var_type.insert_object_entry(id, accessor.clone(), expr_res);
+            }
+            Assign::Object(id, accessor, expr) => {
+                let expr_res = expr.execute(vars);
+                let var = stdout_expect(vars.resolve_var(id), "Undeclared variable used somehow");
+
+                // remake the object so it starts clean
+                let mut map = HashMap::new();
+                map.insert(accessor.clone(), expr_res);
+                var.var_type = VarType::Object(Some(Rc::new(RefCell::new(map))), accessor.clone());
+
+            }
+            Assign::Colon(id1, id2) => {
+                let (src, default_key) = match &stdout_expect(vars.resolve_var(id2), "Undeclared variable used somehow").var_type {
+                    // the default key is copied here, rather than referenced, but this still
+                    // obeys CORE since nothing can set the default string besides the new operator,
+                    // which would break the shared reference anyway
+                    VarType::Object(map, key) => (map.clone(), key.clone()),
+                    _ => unreachable!() // by semantic checks
+                };
+
+                let dest = stdout_expect(vars.resolve_var(id1), "Undeclared variable used somehow");
+                dest.var_type = VarType::Object(src, default_key);
             }
         }
     }

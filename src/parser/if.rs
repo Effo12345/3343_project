@@ -80,6 +80,35 @@ impl If {
 
         Ok(())
     }
+
+    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+        match self {
+            If::If(cond, stmt_seq) => {
+                if cond.execute(vars) {
+                    // push new scope
+                    vars.push(HashMap::new());
+
+                    stmt_seq.execute(vars, read_scanner);
+
+                    // pop if block scope
+                    vars.pop();
+                }
+            }
+            If::IfElse(cond, if_seq, else_seq) => {
+                if cond.execute(vars) {
+                    // eval with if scope
+                    vars.push(HashMap::new());
+                    if_seq.execute(vars, read_scanner);
+                    vars.pop();
+                } else {
+                    // eval with else scope
+                    vars.push(HashMap::new());
+                    else_seq.execute(vars, read_scanner);
+                    vars.pop();
+                }
+            }
+        };
+    }
 }
 
 // indent each branch, keeping if, else, and end at the same level

@@ -38,6 +38,17 @@ impl Stmt {
             Stmt::Decl(decl) => decl.validate(vars)
         }
     }
+
+    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+        match self {
+            Stmt::Assign(assign) => assign.execute(vars),
+            Stmt::If(boxed_if) => boxed_if.execute(vars, read_scanner),
+            Stmt::Loop(boxed_loop) => boxed_loop.execute(vars, read_scanner),
+            Stmt::Print(print) => print.execute(vars),
+            Stmt::Read(read) => read.execute(vars, read_scanner),
+            Stmt::Decl(decl) => decl.execute(vars)
+        };
+    }
 }
 
 // let the statement print itself using the current indentation

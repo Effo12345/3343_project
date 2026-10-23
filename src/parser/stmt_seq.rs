@@ -33,6 +33,16 @@ impl StmtSeq {
             }
         }
     }
+
+    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+        match self {
+            StmtSeq::Stmt(stmt) => stmt.execute(vars, read_scanner),
+            StmtSeq::Seq(stmt, stmt_seq) => {
+                stmt.execute(vars, read_scanner);
+                stmt_seq.execute(vars, read_scanner)
+            }
+        }
+    }
 }
 
 // all statements in this sequence belong at the same indentation level

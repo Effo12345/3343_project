@@ -36,6 +36,16 @@ impl DeclSeq {
 
         Ok(())
     }
+
+    pub fn execute(&self, vars: &mut VarStack) {
+        match self {
+           DeclSeq::Decl(decl) => decl.execute(vars),
+           DeclSeq::Seq(decl, decl_seq) => {
+                decl.execute(vars);
+                decl_seq.execute(vars)
+           }
+        };
+    }
 }
 
 // declarations in the same sequence share an indentation level
