@@ -1,6 +1,6 @@
-use std::{cell::RefCell, collections::HashMap, default, fmt, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
-use crate::{parser::{ScopedVar, VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Expr, PrettyPrint};
 

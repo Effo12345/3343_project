@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::Expr;
 

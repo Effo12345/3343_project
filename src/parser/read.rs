@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack, utils::{exit_with_msg, stdout_expect}, variables::VarStackExt}, scanner::Scanner, token::Token};
+use crate::{parser::{VarStack, utils::{exit_with_msg, stdout_expect}, variables::VarStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -45,7 +45,7 @@ impl Read {
         let var = vars.resolve_var(&id);
 
         // make sure the variable exists before it can be read into
-        let Some(scoped_var) = var else {
+        let Some(_) = var else {
             return Err(format!("Undeclared variable '{}' used in read statement", id));
         };
 

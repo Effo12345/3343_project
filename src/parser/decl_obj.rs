@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack, VarType, variables::ObjectType, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{ScopedVar, VarStack, VarType, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 

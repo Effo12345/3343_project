@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc, thread::Scope};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use super::utils::exit_with_msg;
 
@@ -27,7 +27,7 @@ impl VarType {
             VarType::Object(Some(map), _) => {
                 map.borrow_mut().insert(key, value);
             }
-            _ => exit_with_msg(&format!("Attempted insertion into null object '{id})'"))
+            _ => exit_with_msg(&format!("Attempted insertion into null object '{id}'"))
         }
     }
 
