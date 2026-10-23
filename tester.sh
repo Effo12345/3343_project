@@ -6,7 +6,7 @@ if test -f src/main.rs
 then
 	echo "Attempting to compile rust code..."
 	cargo build --release
-	runner="./target/release/project2"
+	runner="./target/release/project3"
 elif test -f Main.py
 then
 	runner="python3 Main.py"
