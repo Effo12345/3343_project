@@ -50,12 +50,12 @@ fn main() {
     let mut vars: VarStack = Vec::new();
 
     if let Err(e) = proc.validate(&mut vars) {
-        println!("ERROR: {e}");
+        exit_with_msg(&e);
     }
-    else {
-        // Display handles the indentation for the whole tree
-        // println!("{proc}");
-    }
+
+    // display handles the indentation for the whole tree
+    // keep if we ever need to print again in future
+    // println!("{proc}");
 
     proc.execute(&mut vars, &mut data_scanner);
 }
