@@ -57,5 +57,6 @@ fn main() {
     // keep if we ever need to print again in future
     // println!("{proc}");
 
+    // safe to reuse vars here since proc.validate pops everything off
     proc.execute(&mut vars, &mut data_scanner);
 }
