@@ -5,7 +5,7 @@
 ```
 .
 ├── src/
-│   ├── main.rs             # Handle args, parsing, variables, and printing
+│   ├── main.rs             # Handle args, parsing, validation, and execution
 │   ├── scanner.rs          # Scanner struct and implementation
 │   ├── token.rs            # Token enum w/ internal data
 │   └── parser/
@@ -27,11 +27,12 @@
 │       ├── expr.rs         # Addition and subtraction
 │       ├── term.rs         # Multiplication and division
 │       ├── factor.rs       # IDs, constants, object access, and parentheses
-│       └── variables.rs   # Variable types and scope stack definitions
+│       ├── utils.rs        # Error exit helpers that print to stdout
+│       └── variables.rs    # Variable types and scope stack definitions
 ├── Cargo.lock              # no touchy :)
 ├── Cargo.toml              # Package settings and dependencies (none for now)
 ├── README.md               # Project overview and usage notes
-├── tester.sh               # Provided tester w/ Rust runner
+└── tester.sh               # Provided tester w/ Rust runner
 ```
 
 ## Special features/comments
@@ -40,12 +41,14 @@
 - That script assumes you already have Rust installed. On Unix-like OS's this can be done with a single terminal command. Otherwise, see [the Rust installation instructions](https://rust-lang.org/tools/install/)
     - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 - The script also assumes some flavor of Linux OS, which seems reasonable given the g++ call for the C++ case
-- The finished parse tree is pretty-printed by implementing the existing Rust Display trait, allowing for easy and idiomatic printing
+- Moderate levels of witchcraft were employed to allow multiple objects to hold a mutable reference to the underlying data structure. This is something Rust tends to avoid.
 
-## Design description and parse tree rep
-The parser was designed to follow the suggested architecture as closely as possible given the paradigm differences between Python and Rust; each non-terminal is its own enum and each production is a value in that enum. The only exception is non-terminals with a single production, which are declared as structs for convenience. The non-terminals have a constructor (new() method) that performs the parsing. This structure isn't ideal from a performance perspective due to the large amount of references (Box<> objects in Rust) created during the parsing, but it was relatively straightforward to implement.
+## Design description and variable scope handling
+The interpreter was designed to mimic the already-working semantic checks as much as possible. To that end, it recurses the tree in a similar manner and manages variables and scope using the same data structure, VarStack. This is a stack of HashMaps mapping strings (identifiers) to variable type enums (indirectly, through ScopedVar). With this, the execute() methods can freely push new scopes onto the stack and pop them as needed. Variables are accessed by searching from the top of the stack for the first map containing a matching identifier, enforcing scoping and shadowing rules.
+
+The variable enums themselves contain their data representations, with an Integer holding an i32 and an Object a map from String to i32 and a separate String as its default value. These types were chosen to most closely resemble the behavior of Java/Python types.
 
 ## Test description and known bugs
-The parser was tested at first using the provided test cases. Once my code succeeded with those, I created additional test cases to exercise more of the grammar rules and the potential error states, revealing some minor issues that were corrected. I also made cases that I anticipated would break my code, and improved my error messages that way. No major architectural changes were required during development.
+As with the parser, I began by testing the interpreter with a small subset of the grammar, gradually building more functionality until it passed all the provided test cases. Once my code succeeded with those, I created additional test cases to exercise more potential failure modes, revealing some minor oversights that were corrected. Notably, the lack of wrapping for operations in term and expr caused a Rust panic where the specifications expect normal operation. I also made cases that I anticipated would break my code, and improved my error messages that way. No major architectural changes were required during development since the main design decisions were already validated in the parser stage.
 
 No known bugs.
