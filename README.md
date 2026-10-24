@@ -36,12 +36,12 @@
 ```
 
 ## Special features/comments
+- Moderate levels of witchcraft were employed to allow multiple objects to hold a mutable reference to the underlying data structure. This is something Rust tends to avoid.
 - note: this project is written in Rust
 - The included tester script shows the necessary additions to use a Rust runner rather than a Python or C++ one; see lines `5-10`
 - That script assumes you already have Rust installed. On Unix-like OS's this can be done with a single terminal command. Otherwise, see [the Rust installation instructions](https://rust-lang.org/tools/install/)
     - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 - The script also assumes some flavor of Linux OS, which seems reasonable given the g++ call for the C++ case
-- Moderate levels of witchcraft were employed to allow multiple objects to hold a mutable reference to the underlying data structure. This is something Rust tends to avoid.
 
 ## Design description and variable scope handling
 The interpreter was designed to mimic the already-working semantic checks as much as possible. To that end, it recurses the tree in a similar manner and manages variables and scope using the same data structure, VarStack. This is a stack of HashMaps mapping strings (identifiers) to variable type enums (indirectly, through ScopedVar). With this, the execute() methods can freely push new scopes onto the stack and pop them as needed. Variables are accessed by searching from the top of the stack for the first map containing a matching identifier, enforcing scoping and shadowing rules.
