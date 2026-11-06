@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::{FunctionMap, VarStack}, scanner::Scanner, token::Token};
 
 use super::{write_indent, DeclSeq, PrettyPrint, StmtSeq};
 
@@ -11,7 +11,7 @@ pub enum Procedure {
 }
 
 impl Procedure {
-    pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
+    pub fn new(s: &mut Scanner, funcs: &mut FunctionMap) -> Result<Box<Self>, String> {
         // read the procedure header
         if s.current_token() != Token::PROCEDURE {
             return Err(format!("Expected 'procedure' but got {:?}", s.current_token()));
@@ -31,7 +31,7 @@ impl Procedure {
         // begin means there are no global declarations to parse
         let decl_seq = match s.current_token() {
             Token::BEGIN => None,
-            _ => Some(DeclSeq::new(s)?)
+            _ => Some(DeclSeq::new(s, funcs)?)
         };
 
         if s.current_token() != Token::BEGIN {

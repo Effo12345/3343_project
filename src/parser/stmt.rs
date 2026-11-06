@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
-use super::{Assign, Decl, If, Loop, PrettyPrint, Print, Read};
+use super::{Assign, Call, Decl, If, Loop, PrettyPrint, Print, Read};
 
 pub enum Stmt {
     Assign(Box<Assign>),
@@ -10,7 +10,8 @@ pub enum Stmt {
     Loop(Box<Loop>),
     Print(Box<Print>),
     Read(Box<Read>),
-    Decl(Box<Decl>)
+    Decl(Box<Decl>),
+    Call(Box<Call>)
 }
 
 impl Stmt {
@@ -23,6 +24,7 @@ impl Stmt {
             Token::PRINT => Ok(Box::new(Stmt::Print(Print::new(s)?))),
             Token::READ => Ok(Box::new(Stmt::Read(Read::new(s)?))),
             Token::INTEGER | Token::OBJECT => Ok(Box::new(Stmt::Decl(Decl::new(s)?))),
+            Token::BEGIN => Ok(Box::new(Stmt::Call(Call::new(s)?))),
             _ => Err(format!("Unexpected token at the beginning of statement: {:?}", s.current_token()))
         }
     }
@@ -35,7 +37,8 @@ impl Stmt {
             Stmt::Loop(boxed_loop) => boxed_loop.validate(vars),
             Stmt::Print(print) => print.validate(vars),
             Stmt::Read(read) => read.validate(vars),
-            Stmt::Decl(decl) => decl.validate(vars)
+            Stmt::Decl(decl) => decl.validate(vars),
+            Stmt::Call(_) => Ok(())
         }
     }
 
@@ -46,7 +49,8 @@ impl Stmt {
             Stmt::Loop(boxed_loop) => boxed_loop.execute(vars, read_scanner),
             Stmt::Print(print) => print.execute(vars),
             Stmt::Read(read) => read.execute(vars, read_scanner),
-            Stmt::Decl(decl) => decl.execute(vars)
+            Stmt::Decl(decl) => decl.execute(vars),
+            Stmt::Call(_) => ()
         };
     }
 }
@@ -60,7 +64,8 @@ impl PrettyPrint for Stmt {
             Stmt::Loop(boxed_loop) => boxed_loop.fmt_indented(f, level),
             Stmt::Print(print) => print.fmt_indented(f, level),
             Stmt::Read(read) => read.fmt_indented(f, level),
-            Stmt::Decl(decl) => decl.fmt_indented(f, level)
+            Stmt::Decl(decl) => decl.fmt_indented(f, level),
+            Stmt::Call(call) => call.fmt_indented(f, level)
         }
     }
 }

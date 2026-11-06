@@ -17,6 +17,9 @@ mod read;
 mod stmt;
 mod stmt_seq;
 mod term;
+mod function;
+mod parameters;
+mod call;
 
 mod variables;
 pub(crate) mod utils;
@@ -39,6 +42,9 @@ pub use read::Read;
 pub use stmt::Stmt;
 pub use stmt_seq::StmtSeq;
 pub use term::Term;
+pub use function::{FunctionMap, FunctionTree};
+pub use parameters::Parameters;
+pub use call::Call;
 
 pub use variables::{VarType, VarStack, ScopedVar};
 

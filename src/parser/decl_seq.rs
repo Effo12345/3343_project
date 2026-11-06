@@ -2,21 +2,36 @@ use std::fmt;
 
 use crate::{parser::VarStack, scanner::Scanner, token::Token};
 
-use super::{Decl, PrettyPrint};
+use super::{Decl, FunctionMap, FunctionTree, PrettyPrint};
 
 pub enum DeclSeq {
     Decl(Box<Decl>),
-    Seq(Box<Decl>, Box<DeclSeq>)
+    Seq(Box<Decl>, Box<DeclSeq>),
+    Function(Box<FunctionTree>),
+    FunctionSeq(Box<FunctionTree>, Box<DeclSeq>)
 }
 
 impl DeclSeq {
-    pub fn new(s: &mut Scanner) -> Result<Box<Self>, String> {
+    pub fn new(s: &mut Scanner, funcs: &mut FunctionMap) -> Result<Box<Self>, String> {
+        // the procedure keyword means this entry is a function
+        if s.current_token() == Token::PROCEDURE {
+            let function = FunctionTree::new(s, funcs)?;
+            return Ok(Box::new(
+                if s.current_token() != Token::BEGIN {
+                    DeclSeq::FunctionSeq(function, DeclSeq::new(s, funcs)?)
+                }
+                else {
+                    DeclSeq::Function(function)
+                }
+            ));
+        }
+
         // parse a decl to start, then decide if we need the seq later
         let decl = Decl::new(s)?;
         Ok(Box::new(
             // global declarations continue until the procedure body starts
             if s.current_token() != Token::BEGIN {
-                DeclSeq::Seq(decl, DeclSeq::new(s)?)
+                DeclSeq::Seq(decl, DeclSeq::new(s, funcs)?)
             }
             else {
                 DeclSeq::Decl(decl)
@@ -32,6 +47,8 @@ impl DeclSeq {
                 decl.validate(vars)?;
                 decl_seq.validate(vars)?
            }
+           DeclSeq::Function(_) => (),
+           DeclSeq::FunctionSeq(_, decl_seq) => decl_seq.validate(vars)?
         };
 
         Ok(())
@@ -44,6 +61,8 @@ impl DeclSeq {
                 decl.execute(vars);
                 decl_seq.execute(vars)
            }
+           DeclSeq::Function(_) => (),
+           DeclSeq::FunctionSeq(_, decl_seq) => decl_seq.execute(vars)
         };
     }
 }
@@ -55,6 +74,11 @@ impl PrettyPrint for DeclSeq {
             DeclSeq::Decl(decl) => decl.fmt_indented(f, level),
             DeclSeq::Seq(decl, decl_seq) => {
                 decl.fmt_indented(f, level)?;
+                decl_seq.fmt_indented(f, level)
+            }
+            DeclSeq::Function(function) => function.fmt_indented(f, level),
+            DeclSeq::FunctionSeq(function, decl_seq) => {
+                function.fmt_indented(f, level)?;
                 decl_seq.fmt_indented(f, level)
             }
         }

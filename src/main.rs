@@ -7,7 +7,7 @@ use std::env;
 use scanner::Scanner;
 use parser::Procedure;
 
-use crate::parser::{VarStack, utils::exit_with_msg};
+use crate::parser::{FunctionMap, VarStack, utils::exit_with_msg};
 
 fn create_scanner(env_idx: usize, arg_error: &str) -> Option<Scanner> {
     // get the input file from the command line
@@ -40,8 +40,9 @@ fn main() {
     };
 
     // build the syntax tree, stopping at the first parse error
+    let mut funcs: FunctionMap = FunctionMap::new();
     let proc: Procedure;
-    match Procedure::new(&mut code_scanner) {
+    match Procedure::new(&mut code_scanner, &mut funcs) {
         Ok(procedure) => proc = *procedure,
         Err(e) => exit_with_msg(&e)
     };
