@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use crate::{parser::{FunctionMap, VarStack}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, FunctionMap, variables::CallStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, DeclSeq, PrettyPrint, StmtSeq};
 
@@ -61,42 +61,46 @@ impl Procedure {
 
     }
 
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
         match self {
             Procedure::WithDecl(_, decl_seq, stmt_seq) => {
-                // push global scope onto stack
-                vars.push(HashMap::new());
+                // push main frame with global scope onto stack
+                vars.push(vec![HashMap::new()]);
                 decl_seq.validate(vars)?;
+                decl_seq.validate_functions(vars, funcs)?;
 
                 // push procedure scope
-                vars.push(HashMap::new());
-                stmt_seq.validate(vars)?
+                vars.push_scope();
+                stmt_seq.validate(vars, funcs)?
             },
             Procedure::NoDecl(_, stmt_seq) =>  {
-                // push procedure scope
-                vars.push(HashMap::new());
-                stmt_seq.validate(vars)?;
+                // push main frame with procedure scope
+                vars.push(vec![HashMap::new()]);
+                stmt_seq.validate(vars, funcs)?;
             }
         };
+
+        // execute starts over with its own frame
+        vars.pop();
 
         Ok(())
     }
 
-    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
         match self {
             Procedure::WithDecl(_, decl_seq, stmt_seq) => {
-                // push global scope onto stack
-                vars.push(HashMap::new());
+                // push main frame with global scope onto stack
+                vars.push(vec![HashMap::new()]);
                 decl_seq.execute(vars);
 
                 // push procedure scope
-                vars.push(HashMap::new());
-                stmt_seq.execute(vars, read_scanner)
+                vars.push_scope();
+                stmt_seq.execute(vars, read_scanner, funcs)
             },
             Procedure::NoDecl(_, stmt_seq) =>  {
-                // push procedure scope
-                vars.push(HashMap::new());
-                stmt_seq.execute(vars, read_scanner);
+                // push main frame with procedure scope
+                vars.push(vec![HashMap::new()]);
+                stmt_seq.execute(vars, read_scanner, funcs);
             }
         };
     }

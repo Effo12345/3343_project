@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
-use crate::{parser::{VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, VarType, variables::CallStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Expr, PrettyPrint};
 
@@ -137,7 +137,7 @@ impl Assign {
         }
     }
 
-    fn validate_id(id: String, id_type: Option<VarType>, vars: &mut VarStack, assignment_type: String) -> Result<(), String> {
+    fn validate_id(id: String, id_type: Option<VarType>, vars: &mut CallStack, assignment_type: String) -> Result<(), String> {
         let var = vars.resolve_var(&id);
 
         // the ID must be declared in a visible scope
@@ -154,7 +154,7 @@ impl Assign {
     }
 
     // check the destination type and any variables used on the right
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Assign::Expr(id, expr) => {
                 Assign::validate_id(id.to_string(), None, vars, String::new())?;
@@ -176,7 +176,7 @@ impl Assign {
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) {
+    pub fn execute(&self, vars: &mut CallStack) {
         match self {
             Assign::Expr(id, expr) => {
                 let expr_res = expr.execute(vars);

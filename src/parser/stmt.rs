@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, FunctionMap}, scanner::Scanner, token::Token};
 
 use super::{Assign, Call, Decl, If, Loop, PrettyPrint, Print, Read};
 
@@ -30,27 +30,27 @@ impl Stmt {
     }
 
     // each statement handles its own variable and scope checks
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
         match self {
             Stmt::Assign(assign) => assign.validate(vars),
-            Stmt::If(boxed_if) => boxed_if.validate(vars),
-            Stmt::Loop(boxed_loop) => boxed_loop.validate(vars),
+            Stmt::If(boxed_if) => boxed_if.validate(vars, funcs),
+            Stmt::Loop(boxed_loop) => boxed_loop.validate(vars, funcs),
             Stmt::Print(print) => print.validate(vars),
             Stmt::Read(read) => read.validate(vars),
             Stmt::Decl(decl) => decl.validate(vars),
-            Stmt::Call(_) => Ok(())
+            Stmt::Call(call) => call.validate(vars, funcs)
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
         match self {
             Stmt::Assign(assign) => assign.execute(vars),
-            Stmt::If(boxed_if) => boxed_if.execute(vars, read_scanner),
-            Stmt::Loop(boxed_loop) => boxed_loop.execute(vars, read_scanner),
+            Stmt::If(boxed_if) => boxed_if.execute(vars, read_scanner, funcs),
+            Stmt::Loop(boxed_loop) => boxed_loop.execute(vars, read_scanner, funcs),
             Stmt::Print(print) => print.execute(vars),
             Stmt::Read(read) => read.execute(vars, read_scanner),
             Stmt::Decl(decl) => decl.execute(vars),
-            Stmt::Call(_) => ()
+            Stmt::Call(call) => call.execute(vars, read_scanner, funcs)
         };
     }
 }

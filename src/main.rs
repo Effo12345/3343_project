@@ -7,7 +7,7 @@ use std::env;
 use scanner::Scanner;
 use parser::Procedure;
 
-use crate::parser::{FunctionMap, VarStack, utils::exit_with_msg};
+use crate::parser::{CallStack, FunctionMap, utils::exit_with_msg};
 
 fn create_scanner(env_idx: usize, arg_error: &str) -> Option<Scanner> {
     // get the input file from the command line
@@ -48,9 +48,9 @@ fn main() {
     };
     
     // validate scopes and variable types before printing anything
-    let mut vars: VarStack = Vec::new();
+    let mut vars: CallStack = Vec::new();
 
-    if let Err(e) = proc.validate(&mut vars) {
+    if let Err(e) = proc.validate(&mut vars, &funcs) {
         exit_with_msg(&e);
     }
 
@@ -59,5 +59,5 @@ fn main() {
     // println!("{proc}");
 
     // safe to reuse vars here since proc.validate pops everything off
-    proc.execute(&mut vars, &mut data_scanner);
+    proc.execute(&mut vars, &mut data_scanner, &funcs);
 }

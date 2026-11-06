@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::CallStack, scanner::Scanner, token::Token};
 
 use super::Cmpr;
 
@@ -64,7 +64,7 @@ impl Cond {
     }
 
     // check variables in every comparison, including nested conditions
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Cond::Cmpr(cmpr) => cmpr.validate(vars),
             Cond::Not(cond) | Cond::Bracket(cond) => cond.validate(vars),
@@ -75,7 +75,7 @@ impl Cond {
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) -> bool {
+    pub fn execute(&self, vars: &mut CallStack) -> bool {
         match self {
             Cond::Cmpr(cmpr) => cmpr.execute(vars),
             Cond::Not(cond) => !cond.execute(vars),

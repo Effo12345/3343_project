@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::CallStack, scanner::Scanner, token::Token};
 
 use super::{Decl, FunctionMap, FunctionTree, PrettyPrint};
 
@@ -40,7 +40,7 @@ impl DeclSeq {
     }
 
     // add declarations to the scope in the same order they appeared
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
            DeclSeq::Decl(decl) => decl.validate(vars)?,
            DeclSeq::Seq(decl, decl_seq) => {
@@ -54,7 +54,20 @@ impl DeclSeq {
         Ok(())
     }
 
-    pub fn execute(&self, vars: &mut VarStack) {
+    // second pass so function bodies can use globals declared after them
+    pub fn validate_functions(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
+        match self {
+            DeclSeq::Decl(_) => Ok(()),
+            DeclSeq::Seq(_, decl_seq) => decl_seq.validate_functions(vars, funcs),
+            DeclSeq::Function(function) => function.validate(vars, funcs),
+            DeclSeq::FunctionSeq(function, decl_seq) => {
+                function.validate(vars, funcs)?;
+                decl_seq.validate_functions(vars, funcs)
+            }
+        }
+    }
+
+    pub fn execute(&self, vars: &mut CallStack) {
         match self {
            DeclSeq::Decl(decl) => decl.execute(vars),
            DeclSeq::Seq(decl, decl_seq) => {

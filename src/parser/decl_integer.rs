@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{ScopedVar, VarStack, VarType, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, ScopedVar, VarType, utils::stdout_expect, variables::CallStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -31,22 +31,22 @@ impl DeclInteger {
         Ok(Box::new(DeclInteger{id}))
     }
 
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         // only the current scope matters for duplicate declarations
-        let Some(curr_scope) = vars.last_mut() else {
+        let Some(curr_scope) = vars.curr_scope() else {
             return Err("Variable declared outside any scope".to_string());
         };
 
         // insert returns the old value if this name was already declared here
         match curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Integer(0)}) {
-            Some(_) => Err(format!("Variable {} declared multiple times in the same scope", self.id)),
+            Some(_) => Err(format!("Variable '{}' declared multiple times in the same scope", self.id)),
             None => Ok(())
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) {
+    pub fn execute(&self, vars: &mut CallStack) {
         // this runtime error should never happen due to syntax checks
-        let curr_scope = stdout_expect(vars.last_mut(), "Bad variable declaration");
+        let curr_scope = stdout_expect(vars.curr_scope(), "Bad variable declaration");
 
         curr_scope.insert(self.id.clone(), ScopedVar{var_type: VarType::Integer(0)});
     }

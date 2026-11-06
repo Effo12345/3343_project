@@ -46,7 +46,7 @@ pub use function::{FunctionMap, FunctionTree};
 pub use parameters::Parameters;
 pub use call::Call;
 
-pub use variables::{VarType, VarStack, ScopedVar};
+pub use variables::{CallStack, VarType, ScopedVar};
 
 const INDENT_WIDTH: usize = 4;
 

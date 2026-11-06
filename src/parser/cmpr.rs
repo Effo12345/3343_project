@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::CallStack, scanner::Scanner, token::Token};
 
 use super::Expr;
 
@@ -28,7 +28,7 @@ impl Cmpr {
     }
 
     // both sides need to be valid expressions
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Cmpr::Equality(expr1, expr2) | Cmpr::LT(expr1, expr2) => {
                 expr1.validate(vars)?;
@@ -37,7 +37,7 @@ impl Cmpr {
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) -> bool {
+    pub fn execute(&self, vars: &mut CallStack) -> bool {
         match self {
             Cmpr::Equality(expr1, expr2) => expr1.execute(vars) == expr2.execute(vars),
             Cmpr::LT(expr1, expr2) => expr1.execute(vars) < expr2.execute(vars)

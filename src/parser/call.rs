@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, FunctionMap, VarType, utils::{exit_with_msg, stdout_expect}, variables::CallStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Parameters, PrettyPrint};
 
@@ -41,6 +41,44 @@ impl Call {
         s.next_token();
 
         Ok(Box::new(Call{id, args}))
+    }
+
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
+        // every function is already in the map by now, so forward calls work
+        let Some(function) = funcs.get(&self.id) else {
+            return Err(format!("Call to undeclared procedure '{}'", self.id));
+        };
+
+        let args = self.args.ids();
+        if args.len() != function.param_count() {
+            return Err(format!("Procedure {} expects {} argument(s) but was called with {}", self.id, function.param_count(), args.len()));
+        }
+
+        // the arguments must be declared in a visible scope
+        for arg in args {
+            if vars.resolve_var(arg).is_none() {
+                return Err(format!("Undeclared variable '{arg}' used as argument to procedure {}", self.id));
+            }
+        }
+
+        Ok(())
+    }
+
+    // call by sharing, the formal gets its own variable pointing to the same object
+    fn share_arg(&self, arg: &str, vars: &mut CallStack) -> VarType {
+        match &stdout_expect(vars.resolve_var(arg), "Undeclared variable used somehow").var_type {
+            VarType::Object(map, key) => VarType::Object(map.clone(), key.clone()),
+            _ => exit_with_msg(&format!("Non-object variable '{arg}' used as argument to procedure {}", self.id))
+        }
+    }
+
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
+        let function = stdout_expect(funcs.get(&self.id), "Undeclared procedure called somehow");
+
+        // resolve the arguments now while the caller's frame is still on top
+        let args = self.args.ids().into_iter().map(|arg| self.share_arg(arg, vars)).collect();
+
+        function.execute(args, vars, read_scanner, funcs);
     }
 }
 

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::CallStack, scanner::Scanner, token::Token};
 
 use super::Term;
 
@@ -32,7 +32,7 @@ impl Expr {
     }
 
     // check each term and the rest of the expression
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Expr::Term(term) => term.validate(vars),
             Expr::Add(term, expr) => {
@@ -46,7 +46,7 @@ impl Expr {
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) -> i32 {
+    pub fn execute(&self, vars: &mut CallStack) -> i32 {
         match self {
             Expr::Term(term) => term.execute(vars),
             Expr::Add(term, expr) => {

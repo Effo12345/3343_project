@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, FunctionMap, variables::CallStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Cond, PrettyPrint, StmtSeq};
 
@@ -50,61 +50,61 @@ impl If {
         ))
     }
 
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
         match self {
             If::If(cond, stmt_seq) => {
                 cond.validate(vars)?;
 
                 // push new scope
-                vars.push(HashMap::new());
+                vars.push_scope();
 
-                stmt_seq.validate(vars)?;
+                stmt_seq.validate(vars, funcs)?;
 
                 // pop if block scope
-                vars.pop();
+                vars.pop_scope();
             }
             If::IfElse(cond, if_seq, else_seq) => {
                 cond.validate(vars)?;
 
                 // eval with if scope
-                vars.push(HashMap::new());
-                if_seq.validate(vars)?;
-                vars.pop();
+                vars.push_scope();
+                if_seq.validate(vars, funcs)?;
+                vars.pop_scope();
 
                 // eval with else scope
-                vars.push(HashMap::new());
-                else_seq.validate(vars)?;
-                vars.pop();
+                vars.push_scope();
+                else_seq.validate(vars, funcs)?;
+                vars.pop_scope();
             }
         };
 
         Ok(())
     }
 
-    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
         match self {
             If::If(cond, stmt_seq) => {
                 if cond.execute(vars) {
                     // push new scope
-                    vars.push(HashMap::new());
+                    vars.push_scope();
 
-                    stmt_seq.execute(vars, read_scanner);
+                    stmt_seq.execute(vars, read_scanner, funcs);
 
                     // pop if block scope
-                    vars.pop();
+                    vars.pop_scope();
                 }
             }
             If::IfElse(cond, if_seq, else_seq) => {
                 if cond.execute(vars) {
                     // eval with if scope
-                    vars.push(HashMap::new());
-                    if_seq.execute(vars, read_scanner);
-                    vars.pop();
+                    vars.push_scope();
+                    if_seq.execute(vars, read_scanner, funcs);
+                    vars.pop_scope();
                 } else {
                     // eval with else scope
-                    vars.push(HashMap::new());
-                    else_seq.execute(vars, read_scanner);
-                    vars.pop();
+                    vars.push_scope();
+                    else_seq.execute(vars, read_scanner, funcs);
+                    vars.pop_scope();
                 }
             }
         };

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{VarStack, VarType, variables::VarStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, VarType, variables::CallStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::Expr;
 
@@ -71,7 +71,7 @@ impl Factor {
         }
     }
 
-    fn validate_id(id: String, id_type: Option<VarType>, vars: &mut VarStack, factor_type: String) -> Result<(), String> {
+    fn validate_id(id: String, id_type: Option<VarType>, vars: &mut CallStack, factor_type: String) -> Result<(), String> {
         let var = vars.resolve_var(&id);
 
         // the ID must be declared in a visible scope
@@ -88,7 +88,7 @@ impl Factor {
     }
 
     // plain IDs allow either type, but subscripting needs an object
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Factor::Id(id) => Factor::validate_id(id.to_string(), None, vars, "".to_string()),
             Factor::IdSubscript(id, _) =>
@@ -98,7 +98,7 @@ impl Factor {
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) -> i32 {
+    pub fn execute(&self, vars: &mut CallStack) -> i32 {
         match self {
             Factor::Id(id) => {
                 let var = stdout_expect(vars.resolve_var(id), "Undeclared variable used somehow");

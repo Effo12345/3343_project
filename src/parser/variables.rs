@@ -53,13 +53,44 @@ pub struct ScopedVar {
 // searching backwards lets inner declarations shadow outer ones
 pub type VarStack = Vec<HashMap<String, ScopedVar>>;
 
-pub trait VarStackExt {
+// one frame per active procedure call, with the running call at the top
+// the first frame belongs to the main body and its first scope holds the globals
+pub type CallStack = Vec<VarStack>;
+
+pub trait CallStackExt {
     fn resolve_var(&mut self, id: &str) -> Option<&mut ScopedVar>;
+    fn curr_scope(&mut self) -> Option<&mut HashMap<String, ScopedVar>>;
+    fn push_scope(&mut self);
+    fn pop_scope(&mut self);
 }
 
-impl VarStackExt for VarStack {
+impl CallStackExt for CallStack {
     fn resolve_var(&mut self, id: &str) -> Option<&mut ScopedVar> {
+        let (top, below) = self.split_last_mut()?;
+        // globals are the first scope in the first frame
+        let globals = below.first_mut().and_then(|frame| frame.first_mut());
+
         // search from the innermost scope so shadowed variables work
-        self.iter_mut().rev().find_map(|map| map.get_mut(id))
+        // only globals are visible past the current frame
+        // chain iterates top first, then globals
+        top.iter_mut().rev().chain(globals).find_map(|map| map.get_mut(id))
+    }
+
+    fn curr_scope(&mut self) -> Option<&mut HashMap<String, ScopedVar>> {
+        // newest scope in the most recent frame
+        self.last_mut()?.last_mut()
+    }
+
+    // scopes always go on the running call's frame
+    fn push_scope(&mut self) {
+        if let Some(frame) = self.last_mut() {
+            frame.push(HashMap::new());
+        }
+    }
+
+    fn pop_scope(&mut self) {
+        if let Some(frame) = self.last_mut() {
+            frame.pop();
+        }
     }
 }

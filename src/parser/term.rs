@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{VarStack, utils::exit_with_msg}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, utils::exit_with_msg}, scanner::Scanner, token::Token};
 
 use super::Factor;
 
@@ -32,7 +32,7 @@ impl Term {
     }
 
     // check each factor and the rest of the term
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Term::Fac(fac) => fac.validate(vars),
             Term::Mult(fac, term) => {
@@ -46,7 +46,7 @@ impl Term {
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack) -> i32 {
+    pub fn execute(&self, vars: &mut CallStack) -> i32 {
         match self {
             Term::Fac(fac) => fac.execute(vars),
             Term::Mult(fac, term) => {

@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
-use crate::{parser::{VarStack, utils::stdout_expect, variables::VarStackExt}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, FunctionMap, utils::stdout_expect, variables::CallStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Cond, Expr, PrettyPrint, StmtSeq};
 
@@ -75,7 +75,7 @@ impl Loop {
         Ok(Box::new(Loop{assignment_id, assignment_expr, cond, increment, statements}))
     }
 
-    fn validate_id(id: String, vars: &mut VarStack) -> Result<(), String> {
+    fn validate_id(id: String, vars: &mut CallStack) -> Result<(), String> {
         let var = vars.resolve_var(&id);
 
         // the loop variable has to be declared before the loop
@@ -86,7 +86,7 @@ impl Loop {
         Ok(())
     }
 
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
         // validate the header before introducing the body scope
         Loop::validate_id(self.assignment_id.to_string(), vars)?;
 
@@ -95,28 +95,28 @@ impl Loop {
         self.increment.validate(vars)?;
         
         // validate using separate loop scope
-        vars.push(HashMap::new());
-        self.statements.validate(vars)?;
-        vars.pop();
+        vars.push_scope();
+        self.statements.validate(vars, funcs)?;
+        vars.pop_scope();
 
         Ok(())
     }
     
     // look the index up fresh each time since vars changes between writes
-    fn set_index(&self, vars: &mut VarStack, value: i32) {
+    fn set_index(&self, vars: &mut CallStack, value: i32) {
         let idx = stdout_expect(vars.resolve_var(&self.assignment_id), "Undeclared variable used somehow");
         idx.var_type.set_int_or_default(&self.assignment_id, value);
     }
 
-    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
         let init = self.assignment_expr.execute(vars);
         self.set_index(vars, init);
 
         while self.cond.execute(vars) {
             // each loop run gets its own scope
-            vars.push(HashMap::new());
-            self.statements.execute(vars, read_scanner);
-            vars.pop();
+            vars.push_scope();
+            self.statements.execute(vars, read_scanner, funcs);
+            vars.pop_scope();
 
             let next = self.increment.execute(vars);
             self.set_index(vars, next);

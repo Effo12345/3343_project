@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, FunctionMap}, scanner::Scanner, token::Token};
 
 use super::{PrettyPrint, Stmt};
 
@@ -24,22 +24,22 @@ impl StmtSeq {
     }
 
     // validate in order so a declaration only applies to later statements
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
         match self {
-            StmtSeq::Stmt(stmt) => stmt.validate(vars),
+            StmtSeq::Stmt(stmt) => stmt.validate(vars, funcs),
             StmtSeq::Seq(stmt, stmt_seq) => {
-                stmt.validate(vars)?;
-                stmt_seq.validate(vars)
+                stmt.validate(vars, funcs)?;
+                stmt_seq.validate(vars, funcs)
             }
         }
     }
 
-    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
         match self {
-            StmtSeq::Stmt(stmt) => stmt.execute(vars, read_scanner),
+            StmtSeq::Stmt(stmt) => stmt.execute(vars, read_scanner, funcs),
             StmtSeq::Seq(stmt, stmt_seq) => {
-                stmt.execute(vars, read_scanner);
-                stmt_seq.execute(vars, read_scanner)
+                stmt.execute(vars, read_scanner, funcs);
+                stmt_seq.execute(vars, read_scanner, funcs)
             }
         }
     }

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::{VarStack, utils::{exit_with_msg, stdout_expect}, variables::VarStackExt}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, utils::{exit_with_msg, stdout_expect}, variables::CallStackExt}, scanner::Scanner, token::Token};
 
 use super::{write_indent, PrettyPrint};
 
@@ -41,7 +41,7 @@ impl Read {
         Ok(Box::new(Read{id}))
     }
 
-    fn validate_id(id: String, vars: &mut VarStack) -> Result<(), String> {
+    fn validate_id(id: String, vars: &mut CallStack) -> Result<(), String> {
         let var = vars.resolve_var(&id);
 
         // make sure the variable exists before it can be read into
@@ -52,11 +52,11 @@ impl Read {
         Ok(())
     }
 
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         Read::validate_id(self.id.to_string(), vars)
     }
 
-    pub fn execute(&self, vars: &mut VarStack, read_scanner: &mut Scanner) {
+    pub fn execute(&self, vars: &mut CallStack, read_scanner: &mut Scanner) {
         let const_val = match read_scanner.current_token() {
             Token::CONST(val) => val,
             Token::EOS => exit_with_msg("Attempted to read past end of data sequence"),

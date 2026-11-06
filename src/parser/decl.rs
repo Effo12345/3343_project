@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{parser::VarStack, scanner::Scanner, token::Token};
+use crate::{parser::CallStack, scanner::Scanner, token::Token};
 
 use super::{DeclInteger, DeclObj, PrettyPrint};
 
@@ -20,7 +20,7 @@ impl Decl {
     }
 
     // let the declaration add its variable to the current scope
-    pub fn validate(&self, vars: &mut VarStack) -> Result<(), String> {
+    pub fn validate(&self, vars: &mut CallStack) -> Result<(), String> {
         match self {
             Decl::DeclInteger(decl_int) => decl_int.validate(vars)?,
             Decl::DeclObj(decl_obj) => decl_obj.validate(vars)?
@@ -29,7 +29,7 @@ impl Decl {
         Ok(())
     }
 
-    pub fn execute(&self, vars: &mut VarStack) {
+    pub fn execute(&self, vars: &mut CallStack) {
         match self {
             Decl::DeclInteger(decl_int) => decl_int.execute(vars),
             Decl::DeclObj(decl_obj) => decl_obj.execute(vars)

@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}, fmt, rc::Rc};
 
-use crate::{scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, ScopedVar, VarType}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Parameters, PrettyPrint, StmtSeq};
 
@@ -11,6 +11,40 @@ pub type FunctionMap = HashMap<String, Rc<Function>>;
 pub struct Function {
     params: Box<Parameters>,
     body: Box<StmtSeq>
+}
+
+impl Function {
+    pub fn param_count(&self) -> usize {
+        self.params.ids().len()
+    }
+
+    // args and locals share one scope in a new frame, so only globals are visible beyond it
+    fn new_frame(&self, args: Vec<VarType>) -> HashMap<String, ScopedVar> {
+        self.params.ids().into_iter()
+            .zip(args)
+            .map(|(param, var_type)| (param.to_string(), ScopedVar{var_type}))
+            .collect()
+    }
+
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
+        // only the types matter for validation
+        let args = self.params.ids().iter().map(|_| VarType::empty_object()).collect();
+        vars.push(vec![self.new_frame(args)]);
+
+        self.body.validate(vars, funcs)?;
+
+        vars.pop();
+
+        Ok(())
+    }
+
+    pub fn execute(&self, args: Vec<VarType>, vars: &mut CallStack, read_scanner: &mut Scanner, funcs: &FunctionMap) {
+        vars.push(vec![self.new_frame(args)]);
+
+        self.body.execute(vars, read_scanner, funcs);
+
+        vars.pop();
+    }
 }
 
 // the spot in the decl-seq where a function was defined
@@ -48,28 +82,28 @@ impl FunctionTree {
         let mut seen = HashSet::new();
         for param in params.ids() {
             if !seen.insert(param) {
-                return Err(format!("Duplicate formal parameter '{param}' in procedure {id}"));
+                return Err(format!("Duplicate formal parameter '{param}' in procedure '{id}'"));
             }
         }
 
         if s.current_token() != Token::RPAREN {
-            return Err(format!("Expected ) in definition of procedure {id}, got {:?}", s.current_token()));
+            return Err(format!("Expected ) in definition of procedure '{id}', got {:?}", s.current_token()));
         }
         s.next_token();
 
         if s.current_token() != Token::IS {
-            return Err(format!("Expected 'is' in definition of procedure {id}, got {:?}", s.current_token()));
+            return Err(format!("Expected 'is' in definition of procedure '{id}', got {:?}", s.current_token()));
         }
         s.next_token();
 
         // every function needs at least one statement
         if s.current_token() == Token::END {
-            return Err(format!("Missing body in definition of procedure {id}"));
+            return Err(format!("Missing body in definition of procedure '{id}'"));
         }
         let body = StmtSeq::new(s)?;
 
         if s.current_token() != Token::END {
-            return Err(format!("Expected 'end' of procedure {id} but got {:?}", s.current_token()));
+            return Err(format!("Expected 'end' of procedure '{id}' but got {:?}", s.current_token()));
         }
         s.next_token();
 
@@ -77,9 +111,15 @@ impl FunctionTree {
 
         // insert returns the old value if this name was already defined
         match funcs.insert(id.clone(), Rc::clone(&function)) {
-            Some(_) => Err(format!("Procedure {id} declared multiple times")),
+            Some(_) => Err(format!("Procedure '{id}' declared multiple times")),
             None => Ok(Box::new(FunctionTree{id, function}))
         }
+    }
+}
+
+impl FunctionTree {
+    pub fn validate(&self, vars: &mut CallStack, funcs: &FunctionMap) -> Result<(), String> {
+        self.function.validate(vars, funcs)
     }
 }
 
