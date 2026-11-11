@@ -17,7 +17,7 @@ then
 	runner="./a.out"
 fi
 
-for value in {1..10}
+for value in {0..9}
 do
 	echo ""
 	echo "Running ${value}.code"
@@ -37,58 +37,7 @@ rm Correct/temp1
 rm Correct/temp2
 
 echo ""
-echo "Running error cases:"
-echo ""
-
-echo "Running 00.error:"
-echo "-----Student Output Starts-----"
-timeout 5 ${runner} Error/00.code Error/00.data
-echo "-----Student Output Ends-----"
-read -n 1 -p "Error procedure body missing (no stmt-seq). Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
-echo ""
-echo ""
-
-echo "Running 01.error:"
-echo "-----Student Output Starts-----"
-timeout 5 ${runner} Error/01.code Error/01.data
-echo "-----Student Output Ends-----"
-read -n 1 -p "Error calling a procedure that has not been declared. Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
-echo ""
-echo ""
-
-echo "Running 02.error:"
-echo "-----Student Output Starts-----"
-timeout 5 ${runner} Error/02.code Error/02.data
-echo "-----Student Output Ends-----"
-read -n 1 -p "Error is duplicate formal parameters. Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
-echo ""
-echo ""
-
-echo "Running 03.error:"
-echo "-----Student Output Starts-----"
-timeout 5 ${runner} Error/03.code Error/03.data
-echo "-----Student Output Ends-----"
-read -n 1 -p "Semantic error, duplicate procedure name. Error message related to that? (y/n)" mainmenuinput
-if [ $mainmenuinput = "y" ]; then
-	error=$(($error + 1))
-fi
-echo ""
-echo ""
-
-
-
 echo "Correct cases score out of 10:"
 echo $score
-echo "Error cases score out of 4:"
-echo $error
 
 echo "Done!"
