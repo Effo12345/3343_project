@@ -31,7 +31,7 @@
 │       ├── term.rs         # Multiplication and division
 │       ├── factor.rs       # IDs, constants, object access, and parentheses
 │       ├── utils.rs        # Error exit helpers that print to stdout
-│       └── variables.rs    # Variable types, scope stacks, and call stack
+│       └── variables.rs    # Variable types, scope/call stacks, and GC object counting
 ├── Cargo.lock              # no touchy :)
 ├── Cargo.toml              # Package settings and dependencies (none for now)
 ├── README.md               # Project overview and usage notes
@@ -39,19 +39,14 @@
 ```
 
 ## Special features/comments
-- A global map of functions was used to provide easy runtime calling anywhere within the tree, rather than forcing the caller to store a reference to the procedure object elsewhere in the tree. This plays better with Rust's borrowing rules
+- The program's existing structure using the built-in Rc type to wrap object variables and declaring custom types throughout paid dividends for this project. Rather than implementing extensive separate reference counting logic, the Rc already acts as a smart pointer that automatically drops (deallocates) an object when it becomes unreachable by strong references. Keeping a count of reachable objects was then as simple as incrementing and decrementing a global variable from HeapObj's constructor and destructor, respectively. Since this was implemented on a struct wrapped by ObjType, no code outside *variables.rs* and the `id = new object...` path of *assign.rs* was changed.
 - note: this project is written in Rust
 - The included tester script shows the necessary additions to use a Rust runner rather than a Python or C++ one; see lines `5-10`
 - That script assumes you already have Rust installed. On Unix-like OS's this can be done with a single terminal command. Otherwise, see [the Rust installation instructions](https://rust-lang.org/tools/install/)
     - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 - The script also assumes some flavor of Linux OS, which seems reasonable given the g++ call for the C++ case
 
-## Design description and call stack
-Implementing the call stack into the existing code was straightforward; it simply involved a type change to pass variables as a stack of stacks of maps, rather than just a stack of maps. This way, the outer stack entries become frames and the inner stack entries are the same scopes with the same logic as before. When the interpreter needs to access a variable, it searches only the top frame on the stack (the frame for the procedure it's running in) and the bottom scope of the bottom frame (the global variables declared during decl_seq). Scope resolution within a given frame works as before, with search for the identifier starting at the top of the scopes stack.
-
-The other major design change was implementing procedure calls. This was handled by placing all the procedures into a map during parsing, then passing this map around during execution; procedure calls evaluate the arguments in their frame, get the Function struct from the map, then call its execute method. The Function struct is then responsible for pushing a new frame with the parameters.
-
 ## Test description and known bugs
-Since this project had pieces of almost all the other projects (parser, validation, execution), I decided to implement and test each phase (i.e. unit testing) before moving on to the next. I began with the parser and validated it using the PrettyPrint methods. Then, the semantic checks, tested against the provided test cases. Once they permitted all the Correct cases and caught the expected Errors, I moved on to the interpreter, using the semantic checks as a model, as I did for project 3. After it succeeded for all the provided test cases, I wrote a few more to exercise some of the execution paths I was less confident in, like accessing global variables inside procedure calls.
+Very little specialized testing was needed for this project. I ran a couple test programs with print statements to verify the Rc tracked references as I expected; this test also verified new and drop would run when I anticipated. From there, I implemented the global variable with the sum of reachable objects and validated against the provided test cases. I was confident in the implementation from that testing since it almost entirely reused working code from prior projects and I had already validated the additions in `variables.rs` through my Rc testing.
 
 No known bugs.
