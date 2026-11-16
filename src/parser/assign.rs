@@ -1,6 +1,6 @@
-use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
+use std::fmt;
 
-use crate::{parser::{CallStack, VarType, variables::CallStackExt, utils::stdout_expect}, scanner::Scanner, token::Token};
+use crate::{parser::{CallStack, VarType, variables::{CallStackExt, HeapObj}, utils::stdout_expect}, scanner::Scanner, token::Token};
 
 use super::{write_indent, Expr, PrettyPrint};
 
@@ -195,11 +195,8 @@ impl Assign {
                 let expr_res = expr.execute(vars);
                 let var = stdout_expect(vars.resolve_var(id), "Undeclared variable used somehow");
 
-                // remake the object so it starts clean
-                let mut map = HashMap::new();
-                map.insert(accessor.clone(), expr_res);
-                var.var_type = VarType::Object(Some(Rc::new(RefCell::new(map))), accessor.clone());
-
+                // new object is counted first, then the old one drops if this was its last reference
+                var.var_type = VarType::Object(Some(HeapObj::new(accessor.clone(), expr_res)), accessor.clone());
             }
             Assign::Colon(id1, id2) => {
                 let (src, default_key) = match &stdout_expect(vars.resolve_var(id2), "Undeclared variable used somehow").var_type {

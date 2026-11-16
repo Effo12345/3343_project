@@ -1,8 +1,46 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::{Cell, RefCell}, collections::HashMap, ops::Deref, rc::Rc};
 
 use super::utils::exit_with_msg;
 
-pub type ObjectType = Rc<RefCell<HashMap<String, i32>>>;
+// running count of reachable objects, printed whenever it changes
+thread_local! {
+    static REACHABLE: Cell<usize> = const { Cell::new(0) };
+}
+
+fn update_reachable(delta: isize) {
+    let n = REACHABLE.get().wrapping_add_signed(delta);
+    REACHABLE.set(n);
+    println!("gc:{n}");
+}
+
+// the Rc around this does the actual ref counting, this just reports when
+// an object is made and when its last reference goes away
+#[derive(PartialEq)]
+pub struct HeapObj(RefCell<HashMap<String, i32>>);
+
+impl HeapObj {
+    pub fn new(key: String, value: i32) -> ObjectType {
+        update_reachable(1);
+        Rc::new(HeapObj(RefCell::new(HashMap::from([(key, value)]))))
+    }
+}
+
+impl Drop for HeapObj {
+    fn drop(&mut self) {
+        update_reachable(-1);
+    }
+}
+
+// lets callers keep using borrow/borrow_mut directly
+impl Deref for HeapObj {
+    type Target = RefCell<HashMap<String, i32>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+pub type ObjectType = Rc<HeapObj>;
 
 #[derive(PartialEq)]
 pub enum VarType {
@@ -14,11 +52,6 @@ impl VarType {
     // type-only placeholder for validation, no map allocated
     pub fn empty_object() -> Self {
         VarType::Object(None, String::new())
-    }
-
-    // fresh object for execution
-    pub fn new_object() -> Self {
-        VarType::Object(Some(ObjectType::default()), String::new())
     }
 
     // insert into an object's map using the caller's key
